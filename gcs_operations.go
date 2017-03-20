@@ -15,7 +15,7 @@ limitations under the License.
 // names and file name/prefix, such as ls, cp, rm, etc. on Google Cloud
 // Storage.
 
-package gcs
+package embargo
 
 import (
 	"fmt"

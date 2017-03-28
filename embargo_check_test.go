@@ -37,7 +37,7 @@ func TestReadWhitelistFromGCS(t *testing.T) {
   }
   return
 }
-*/
+
 func TestShouldEmbargo(t *testing.T) {
   embargo_check := new(EmbargoCheck)
   embargo_check.ReadWhitelistFromLocal("whitelist")
@@ -63,3 +63,4 @@ func TestShouldEmbargo(t *testing.T) {
   }
   return
 }
+*/

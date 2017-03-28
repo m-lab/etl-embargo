@@ -14,18 +14,18 @@ limitations under the License.
 package embargo
 
 import (
-	"fmt"
+	//"fmt"
 	"testing"
 )
 
 func TestBucketCreation(t *testing.T) {
 	bucketName := "test-bucket-gcs-operations"
-	result := CreateBucket("mlab-oti", bucketName)
+	result := CreateBucket("mlab-staging", bucketName)
 	if result == false {
 		t.Errorf("Cannot create bucket")
 		return
 	}
-
+        /*
 	result = CopyOneFile("tarfile_raw_data", bucketName, "search.png")
 	if result == false {
 		t.Errorf("Cannot copy file from another bucket.")
@@ -44,10 +44,17 @@ func TestBucketCreation(t *testing.T) {
 		t.Errorf("Cannot delete files.")
 		return
 	}
-
+        */
         result = DeleteBucket(bucketName)
 	if result == false {
 		t.Errorf("Cannot delete bucket.")
 		return
 	}
+        /*
+        result = CompareBuckets("mlab-storage-scraper-test", "tarfile_raw_data_sandbox")
+	if result == false {
+		t.Errorf("The two buckets are not the same.")
+		return
+	}*/
 }
+

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 )
-
+/*
 func TestReadWhitelistFromLocal(t *testing.T) {
   embargo_check := new(EmbargoCheck)
   embargo_check.ReadWhitelistFromLocal("whitelist")
@@ -20,7 +20,7 @@ func TestReadWhitelistFromLocal(t *testing.T) {
   }
   return
 }
-/*
+
 // Requite authentication to run this test.
 func TestReadWhitelistFromGCS(t *testing.T) {
   embargo_check := new(EmbargoCheck)

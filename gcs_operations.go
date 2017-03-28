@@ -330,3 +330,4 @@ func CompareBuckets(sourceBucket string, destBucket string) bool {
 
 	return true
 }
+

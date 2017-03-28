@@ -28,3 +28,5 @@ type FileNameParser interface {
   GetLocalIP()
   GetDate()
 }
+
+

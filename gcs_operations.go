@@ -27,12 +27,12 @@ import (
 	storage "google.golang.org/api/storage/v1"
 )
 
-var service = createService()
+var service = CreateService()
 
 // Create GCS service used by the following functions.
-func createService() *storage.Service {
-        // This scope allows the application full control over resources in Google Cloud Storage
-        var scope = storage.DevstorageFullControlScope
+func CreateService() *storage.Service {
+	// This scope allows the application full control over resources in Google Cloud Storage
+	var scope = storage.DevstorageFullControlScope
 	client, err := google.DefaultClient(context.Background(), scope)
 	if err != nil {
 		fmt.Printf("Unable to get default storage client: %v \n", err)
@@ -135,22 +135,28 @@ func DeleteFiles(bucketName string, prefixFileName string) bool {
 			break
 		}
 	}
-        return true
+	return true
 }
 
 // Delete the bucket if it is empty. ("rmdir")
 func DeleteBucket(bucketName string) bool {
-        sourceFiles, err := service.Objects.List(bucketName).Do()
-        if err != nil {
+	sourceFiles, err := service.Objects.List(bucketName).Do()
+	if err != nil {
 		return false
 	}
 	if len(sourceFiles.Items) == 0 {
 		if err := service.Buckets.Delete(bucketName).Do(); err != nil {
 			fmt.Printf("Could not delete bucket %v\n", err)
 			return false
-		}
-	}
-	return true
+		} else {
+                  fmt.Printf("Delete bucket %s successfully.\n", bucketName)
+	          return true
+                }
+	} else {
+          fmt.Printf("Could not delete non empty bucket %v\n", bucketName)
+	  return false
+        }
+        
 }
 
 // Upload one file from local path to bucket. ("cp")
@@ -261,6 +267,7 @@ func SyncTwoBuckets(sourceBucket string, destBucket string, prefixFileName strin
 	return true
 }
 
+
 // Compare whether 2 buckets have exactly same content. Return true if they are the same.
 func CompareBuckets(sourceBucket string, destBucket string) bool {
 	if service == nil {
@@ -330,4 +337,3 @@ func CompareBuckets(sourceBucket string, destBucket string) bool {
 
 	return true
 }
-

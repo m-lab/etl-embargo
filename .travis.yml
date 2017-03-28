@@ -1,7 +1,7 @@
 language: go
 
 install:
-  - echo noop		 +  - bash scripts/gogetcookie.sh
+  - bash scripts/gogetcookie.sh
 
 script:
 - go test -v -run Get

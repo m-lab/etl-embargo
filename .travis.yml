@@ -1,7 +1,5 @@
 language: go
 
-install:
-  - bash scripts/gogetcookie.sh
-
 script:
 - go test -v -run Get
+ 

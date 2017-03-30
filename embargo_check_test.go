@@ -37,10 +37,10 @@ func TestReadWhitelistFromGCS(t *testing.T) {
   }
   return
 }
-
+*/
 func TestShouldEmbargo(t *testing.T) {
   embargo_check := new(EmbargoCheck)
-  embargo_check.ReadWhitelistFromLocal("whitelist")
+  embargo_check.whitelist["213.244.128.170"] = true
   embargo_check.embargodate = "20160315"
   // After embargo date and IP not whitelisted. Return true, embargoed 
   if embargo_check.ShouldEmbargo("20170225T23:00:00Z_4.34.58.34_0.web100.gz") {
@@ -63,4 +63,4 @@ func TestShouldEmbargo(t *testing.T) {
   }
   return
 }
-*/
+

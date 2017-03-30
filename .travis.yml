@@ -1,4 +1,8 @@
 language: go
 
+before_install:
+
+
+
 script:
 - go test -v -run Get

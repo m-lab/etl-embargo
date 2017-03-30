@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	checkService = CreateService()
+	checkService = createService()
 )
 
 type EmbargoCheck struct {

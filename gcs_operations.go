@@ -261,6 +261,7 @@ func SyncTwoBuckets(sourceBucket string, destBucket string, prefixFileName strin
 	return true
 }
 
+
 // Compare whether 2 buckets have exactly same content. Return true if they are the same.
 func CompareBuckets(sourceBucket string, destBucket string) bool {
 	if service == nil {
@@ -309,8 +310,8 @@ func CompareBuckets(sourceBucket string, destBucket string) bool {
 				existingFilenames[oneItem.Name] = false
 				continue
 			} else {
-                                fmt.Printf("Here is a file in sourceBucket but not in destBucket: %s", oneItem.Name)
-				return false
+				fmt.Printf("Here is a file in sourceBucket but not in destBucket: %s", oneItem.Name)
+        return false
 			}
 
 		}
@@ -323,11 +324,10 @@ func CompareBuckets(sourceBucket string, destBucket string) bool {
 	// Go through map existingFilenames[] to see whether all of them are flipped to false.
 	for fileName := range existingFilenames {
 		if existingFilenames[fileName] == true {
-                        fmt.Printf("Here is a file in destBucket but not in sourceBucket: %s", fileName)
+      fmt.Printf("Here is a file in destBucket but not in sourceBucket: %s", fileName)
 			return false
 		}
 	}
 
 	return true
 }
-

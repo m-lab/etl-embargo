@@ -1,9 +1,5 @@
 language: go
 
-before_install:
-
-
-
 script:
 - go test -v -run Get
 - go test -v -run Read

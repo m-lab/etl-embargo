@@ -17,7 +17,7 @@ type EmbargoCheck struct {
   whitelist map[string]bool
   embargodate string
 }
-
+/*
 // TODO: Read IP whitelist from Data Store.
 
 // ReadWhitelistFromLocal load IP whitelist from a local file.
@@ -53,7 +53,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) {
 		ec.whitelist = whiteList
 	}
 }
-
+*/
 // EmbargoCheck decide whether to embargo it based on embargo date and IP
 // whitelist given a filename of sidestream test.
 // The filename is like: 20170225T23:00:00Z_4.34.58.34_0.web100.gz

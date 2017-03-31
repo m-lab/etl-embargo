@@ -8,12 +8,12 @@ import (
 func TestReadWhitelistFromLocal(t *testing.T) {
   embargo_check := new(EmbargoCheck)
   embargo_check.ReadWhitelistFromLocal("whitelist")
-  if embargo_check.whitelist["213.244.128.170"] {
+  if embargo_check.Whitelist["213.244.128.170"] {
     fmt.Printf("ReadWhitelist correct\n")
   } else {
     t.Error("Wrong\n")
   }
-  if embargo_check.whitelist["2001:4c08:2003:2::16"] {
+  if embargo_check.Whitelist["2001:4c08:2003:2::16"] {
     t.Error("Wrong\n")
   } else {
     fmt.Printf("ReadWhitelist correct\n")
@@ -25,12 +25,12 @@ func TestReadWhitelistFromLocal(t *testing.T) {
 func TestReadWhitelistFromGCS(t *testing.T) {
   embargo_check := new(EmbargoCheck)
   embargo_check.ReadWhitelistFromGCS("whitelist")
-  if embargo_check.whitelist["213.244.128.170"] {
+  if embargo_check.Whitelist["213.244.128.170"] {
     fmt.Printf("ReadWhitelist correct\n")
   } else {
     t.Error("Wrong\n")
   }
-  if embargo_check.whitelist["2001:4c08:2003:2::16"] {
+  if embargo_check.Whitelist["2001:4c08:2003:2::16"] {
     t.Error("Wrong\n")
   } else {
     fmt.Printf("ReadWhitelist correct\n")
@@ -41,7 +41,7 @@ func TestReadWhitelistFromGCS(t *testing.T) {
 func TestShouldEmbargo(t *testing.T) {
   embargo_check := new(EmbargoCheck)
   embargo_check.ReadWhitelistFromLocal("whitelist")
-  embargo_check.embargodate = "20160315"
+  embargo_check.Embargodate = "20160315"
   // After embargo date and IP not whitelisted. Return true, embargoed 
   if embargo_check.ShouldEmbargo("20170225T23:00:00Z_4.34.58.34_0.web100.gz") {
     fmt.Printf("Embargo correctly.\n")

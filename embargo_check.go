@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-var (
-	checkService = createService()
-)
-
 type EmbargoCheck struct {
   whitelist map[string]bool
   embargodate string
@@ -41,7 +37,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string){
 func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) {
 	if checkService == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return
+		checkService = createService()
 	}
 	whiteList := make(map[string]bool)
 	if fileContent, err := checkService.Objects.Get("sidestream-embargo", path).Download(); err == nil {

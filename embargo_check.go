@@ -35,6 +35,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string){
 
 // ReadWhitelistFromGCS load IP whitelist from cloud storage.
 func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) {
+	checkService := CreateService()
 	if checkService == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		checkService = createService()

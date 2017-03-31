@@ -10,8 +10,8 @@ import (
 )
 
 type EmbargoCheck struct {
-  whitelist map[string]bool
-  embargodate string
+  Whitelist map[string]bool
+  Embargodate string
 }
 
 // TODO: Read IP whitelist from Data Store.
@@ -30,7 +30,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string){
 		oneLine := strings.TrimSuffix(scanner.Text(), "\n")
 		whiteList[oneLine] = true
 	}
-	ec.whitelist = whiteList
+	ec.Whitelist = whiteList
 }
 
 // ReadWhitelistFromGCS load IP whitelist from cloud storage.
@@ -47,7 +47,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) {
 			oneLine := strings.TrimSuffix(scanner.Text(), "\n")
 			whiteList[oneLine] = true
 		}
-		ec.whitelist = whiteList
+		ec.Whitelist = whiteList
 	}
 }
 
@@ -64,7 +64,7 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
 		fmt.Println(err)
 		return true
 	}
-	embargoDateInt, err := strconv.Atoi(ec.embargodate)
+	embargoDateInt, err := strconv.Atoi(ec.Embargodate)
 	if err != nil {
 		fmt.Println(err)
 		return true
@@ -75,7 +75,7 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
         fn := FileName{name: fileName}
 	localIP := fn.GetLocalIP()
 	// For old filename, that do not contain IP, always embargo them.
-	if ec.whitelist[localIP] {
+	if ec.Whitelist[localIP] {
 		return false
 	}
 	return true

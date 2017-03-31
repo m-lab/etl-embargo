@@ -19,45 +19,43 @@ import (
 )
 
 func TestBucketCreation(t *testing.T) {
-/*
-	bucketName := "test-bucket-gcs-operations"
-	result := CreateBucket("mlab-staging", bucketName)
-	if result == false {
-		t.Errorf("Cannot create bucket")
-		return
-	}
+	/*
+		bucketName := "test-bucket-gcs-operations"
+		result := CreateBucket("mlab-staging", bucketName)
+		if result == false {
+			t.Errorf("Cannot create bucket")
+			return
+		}
 
-	result = CopyOneFile("tarfile_raw_data", bucketName, "search.png")
-	if result == false {
-		t.Errorf("Cannot copy file from another bucket.")
-		return
-	}
+		result = CopyOneFile("tarfile_raw_data", bucketName, "search.png")
+		if result == false {
+			t.Errorf("Cannot copy file from another bucket.")
+			return
+		}
 
-	fileNames := GetFileNamesFromBucket(bucketName)
+		fileNames := GetFileNamesFromBucket(bucketName)
 
-	fmt.Printf("Files in bucket %v:\n", bucketName)
-	for _, fileName := range fileNames {
-		fmt.Println(fileName)
-	}
+		fmt.Printf("Files in bucket %v:\n", bucketName)
+		for _, fileName := range fileNames {
+			fmt.Println(fileName)
+		}
 
-	result = DeleteFiles(bucketName, "")
-	if result == false {
-		t.Errorf("Cannot delete files.")
-		return
-	}
+		result = DeleteFiles(bucketName, "")
+		if result == false {
+			t.Errorf("Cannot delete files.")
+			return
+		}
 
-	result = DeleteBucket(bucketName)
-	if result == false {
-		t.Errorf("Cannot delete bucket.")
-		return
-	}
+		result = DeleteBucket(bucketName)
+		if result == false {
+			t.Errorf("Cannot delete bucket.")
+			return
+		}
 
-	result = CompareBuckets("mlab-storage-scraper-test", "tarfile_raw_data_sandbox")
-	if result == false {
-		t.Errorf("The two buckets are not the same.")
-		return
-	}
-*/
+		result = CompareBuckets("mlab-storage-scraper-test", "tarfile_raw_data_sandbox")
+		if result == false {
+			t.Errorf("The two buckets are not the same.")
+			return
+		}
+	*/
 }
-
-

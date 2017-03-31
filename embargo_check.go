@@ -16,7 +16,7 @@ package embargo
 
 import (
 	"bufio"
-        "log"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -75,10 +75,10 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
 // file with IP that is in the IP whitelist are always published. Return false
 // file with date after the embargo date and IP not in the whitelist will be embargoed. Return true
 func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
-        if len(fileName) < 8 {
-                log.Println("Filename not with right length.\n")
+	if len(fileName) < 8 {
+		log.Println("Filename not with right length.\n")
 		return true
-        }
+	}
 	date, err := strconv.Atoi(fileName[0:8])
 	if err != nil {
 		log.Println(err)

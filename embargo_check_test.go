@@ -33,6 +33,7 @@ func TestReadWhitelistFromLocal(t *testing.T) {
 	}
 	return
 }
+
 /*
 // Require authentication to run.
 func TestReadWhitelistFromGCS(t *testing.T) {

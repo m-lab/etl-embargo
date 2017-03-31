@@ -17,10 +17,10 @@ type EmbargoCheck struct {
 // TODO: Read IP whitelist from Data Store.
 
 // ReadWhitelistFromLocal load IP whitelist from a local file.
-func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string){
+func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 	file, err := os.Open(path)
 	if err != nil {
-		return
+		return false
 	}
 	defer file.Close()
 
@@ -31,14 +31,15 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string){
 		whiteList[oneLine] = true
 	}
 	ec.Whitelist = whiteList
+        return true
 }
 
 // ReadWhitelistFromGCS load IP whitelist from cloud storage.
-func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) {
+func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
         checkService := CreateService()
 	if checkService == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return
+		return false
 	}
 	whiteList := make(map[string]bool)
 	if fileContent, err := checkService.Objects.Get("sidestream-embargo", path).Download(); err == nil {
@@ -48,7 +49,9 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) {
 			whiteList[oneLine] = true
 		}
 		ec.Whitelist = whiteList
+                return true
 	}
+        return false
 }
 
 // EmbargoCheck decide whether to embargo it based on embargo date and IP

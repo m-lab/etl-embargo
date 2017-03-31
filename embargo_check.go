@@ -16,7 +16,7 @@ package embargo
 
 import (
 	"bufio"
-	"fmt"
+        "log"
 	"os"
 	"strconv"
 	"strings"
@@ -51,7 +51,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
 	checkService := CreateService()
 	if checkService == nil {
-		fmt.Printf("Storage service was not initialized.\n")
+		log.Printf("Storage service was not initialized.\n")
 		return false
 	}
 	whiteList := make(map[string]bool)
@@ -75,14 +75,18 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
 // file with IP that is in the IP whitelist are always published. Return false
 // file with date after the embargo date and IP not in the whitelist will be embargoed. Return true
 func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
+        if len(fileName) < 8 {
+                log.Println("Filename not with right length.\n")
+		return true
+        }
 	date, err := strconv.Atoi(fileName[0:8])
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return true
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return true
 	}
 	if date < ec.Embargodate {

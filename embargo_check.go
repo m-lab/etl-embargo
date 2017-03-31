@@ -35,10 +35,10 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string){
 
 // ReadWhitelistFromGCS load IP whitelist from cloud storage.
 func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) {
-	checkService := CreateService()
+        checkService := CreateService()
 	if checkService == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		checkService = createService()
+		return
 	}
 	whiteList := make(map[string]bool)
 	if fileContent, err := checkService.Objects.Get("sidestream-embargo", path).Download(); err == nil {
@@ -86,4 +86,3 @@ type ReadWLer interface {
   ReadWhitelistFromGCS(path string)
   ShouldEmbargo(fileName string)
 }
-

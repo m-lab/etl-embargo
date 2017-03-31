@@ -27,7 +27,6 @@ import (
 	storage "google.golang.org/api/storage/v1"
 )
 
-var service = createService()
 
 // Create GCS service used by the following functions.
 func createService() *storage.Service {
@@ -50,7 +49,7 @@ func createService() *storage.Service {
 func CreateBucket(projectID string, bucketName string) bool {
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return false
+		service = createService()
 	}
 
 	if _, err := service.Buckets.Get(bucketName).Do(); err == nil {
@@ -71,7 +70,7 @@ func CreateBucket(projectID string, bucketName string) bool {
 func GetFileNamesFromBucket(bucketName string) []string {
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return nil
+		service = createService()
 	}
 
 	var fileNames []string
@@ -100,7 +99,7 @@ func GetFileNamesFromBucket(bucketName string) []string {
 func DeleteFiles(bucketName string, prefixFileName string) bool {
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return false
+		service = createService()
 	}
 
 	_, err := service.Buckets.Get(bucketName).Do()
@@ -140,6 +139,10 @@ func DeleteFiles(bucketName string, prefixFileName string) bool {
 
 // Delete the bucket if it is empty. ("rmdir")
 func DeleteBucket(bucketName string) bool {
+	if service == nil {
+		fmt.Printf("Storage service was not initialized.\n")
+		service = createService()
+	}
         sourceFiles, err := service.Objects.List(bucketName).Do()
         if err != nil {
 		return false
@@ -157,7 +160,7 @@ func DeleteBucket(bucketName string) bool {
 func UploadFile(bucketName string, fileName string) bool {
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return false
+		service = createService()
 	}
 
 	file, err := os.Open(fileName)
@@ -178,7 +181,7 @@ func UploadFile(bucketName string, fileName string) bool {
 func CopyOneFile(sourceBucket string, destBucket string, fileName string) bool {
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return false
+		service = createService()
 	}
 
 	if fileContent, err := service.Objects.Get(sourceBucket, fileName).Download(); err == nil {
@@ -197,7 +200,7 @@ func CopyOneFile(sourceBucket string, destBucket string, fileName string) bool {
 func SyncTwoBuckets(sourceBucket string, destBucket string, prefixFileName string) bool {
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return false
+		service = createService()
 	}
 
 	// Build list of exisitng files in destination bucket.
@@ -265,7 +268,7 @@ func SyncTwoBuckets(sourceBucket string, destBucket string, prefixFileName strin
 func CompareBuckets(sourceBucket string, destBucket string) bool {
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
-		return false
+		service = createService()
 	}
 
 	// Build list of exisitng files in destination bucket.

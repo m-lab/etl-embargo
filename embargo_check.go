@@ -1,3 +1,16 @@
+/*
+Copyright 2013 Google Inc.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+	http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 // Implement whitelist loading and embargo check based on filename.
 package embargo
 
@@ -10,8 +23,8 @@ import (
 )
 
 type EmbargoCheck struct {
-  Whitelist map[string]bool
-  Embargodate string
+	Whitelist   map[string]bool
+	Embargodate int
 }
 
 // TODO: Read IP whitelist from Data Store.
@@ -31,12 +44,12 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 		whiteList[oneLine] = true
 	}
 	ec.Whitelist = whiteList
-        return true
+	return true
 }
 
 // ReadWhitelistFromGCS load IP whitelist from cloud storage.
 func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
-        checkService := CreateService()
+	checkService := CreateService()
 	if checkService == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		return false
@@ -49,9 +62,9 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
 			whiteList[oneLine] = true
 		}
 		ec.Whitelist = whiteList
-                return true
+		return true
 	}
-        return false
+	return false
 }
 
 // EmbargoCheck decide whether to embargo it based on embargo date and IP
@@ -67,15 +80,15 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
 		fmt.Println(err)
 		return true
 	}
-	embargoDateInt, err := strconv.Atoi(ec.Embargodate)
+
 	if err != nil {
 		fmt.Println(err)
 		return true
 	}
-	if date < embargoDateInt {
+	if date < ec.Embargodate {
 		return false
 	}
-        fn := FileName{name: fileName}
+	fn := FileName{name: fileName}
 	localIP := fn.GetLocalIP()
 	// For old filename, that do not contain IP, always embargo them.
 	if ec.Whitelist[localIP] {
@@ -85,7 +98,7 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
 }
 
 type ReadWLer interface {
-  ReadWhitelistFromLocal(path string)
-  ReadWhitelistFromGCS(path string)
-  ShouldEmbargo(fileName string)
+	ReadWhitelistFromLocal(path string)
+	ReadWhitelistFromGCS(path string)
+	ShouldEmbargo(fileName string)
 }

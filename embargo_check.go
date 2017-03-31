@@ -96,9 +96,3 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
 	}
 	return true
 }
-
-type ReadWLer interface {
-	ReadWhitelistFromLocal(path string)
-	ReadWhitelistFromGCS(path string)
-	ShouldEmbargo(fileName string)
-}

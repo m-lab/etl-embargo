@@ -2,6 +2,7 @@ package embargo
 
 import (
 	"bytes"
+        "fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -48,7 +49,9 @@ func TestSplitTarFile(t *testing.T) {
 	privateGolden, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000-e.tgz")
 	if err != nil {
 		t.Fatal("cannot opene private golden data.")
-	}
+	} else {
+                fmt.Println("correct")
+        }
 	defer privateGolden.Close()
 	privateContent, err := ioutil.ReadAll(privateGolden)
 	if !bytes.Equal(privateBuf.Bytes(), privateContent) {

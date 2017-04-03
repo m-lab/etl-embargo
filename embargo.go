@@ -74,6 +74,7 @@ func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
 			fmt.Println(err)
 			return false, privateBuf, publicBuf
 		}
+                fmt.Println(header.Name)
 		basename := filepath.Base(header.Name)
 		info := header.FileInfo()
 		hdr := new(tar.Header)
@@ -84,6 +85,7 @@ func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
 		output, err := ioutil.ReadAll(tarReader)
 		if strings.Contains(basename, "web100") && embargoCheck.ShouldEmbargo(basename) {
 			// put this file to a private buffer
+                        fmt.Println("private")
 			if err := privateTw.WriteHeader(hdr); err != nil {
 				fmt.Println(err)
 				return false, privateBuf, publicBuf
@@ -94,6 +96,7 @@ func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
 			}
 		} else {
 			// put this file to a public buffer
+                        fmt.Println("public")
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				fmt.Println(err)
 			}

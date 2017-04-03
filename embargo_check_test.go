@@ -48,20 +48,20 @@ func TestShouldEmbargo(t *testing.T) {
 	embargo_check.ReadWhitelistFromLocal("testdata/whitelist")
 	embargo_check.Embargodate = 20160315
 	// After embargo date and IP not whitelisted. Return true, embargoed.
-        filename1 := "20170225T23:00:00Z_4.34.58.34_0.web100.gz" 
+	filename1 := "20170225T23:00:00Z_4.34.58.34_0.web100.gz"
 	if !embargo_check.ShouldEmbargo(filename1) {
-                t.Error("ShouldEmbargo(%s) = false, but file date is after embargo date (%d) and IP not whitelisted (%v).\n", filename1,  embargo_check.Embargodate, embargo_check.Whitelist)
+		t.Error("ShouldEmbargo(%s) = false, but file date is after embargo date (%d) and IP not whitelisted (%v).\n", filename1, embargo_check.Embargodate, embargo_check.Whitelist)
 	}
 
 	// After embargo date and IP whitelisted. Return false, not embargoed.
-        filename2 := "20170225T23:00:00Z_213.244.128.170_0.web100.gz"
+	filename2 := "20170225T23:00:00Z_213.244.128.170_0.web100.gz"
 	if embargo_check.ShouldEmbargo(filename2) {
-		t.Error("ShouldEmbargo(%s) = true, but after embargo date (%d) and IP whitelisted (%v).\n", filename2,  embargo_check.Embargodate, embargo_check.Whitelist)
+		t.Error("ShouldEmbargo(%s) = true, but after embargo date (%d) and IP whitelisted (%v).\n", filename2, embargo_check.Embargodate, embargo_check.Whitelist)
 	}
 	// Before embargo date. Return false, not embargoed
-        filename3 := "20150225T23:00:00Z_213.244.128.1_0.web100.gz"
+	filename3 := "20150225T23:00:00Z_213.244.128.1_0.web100.gz"
 	if embargo_check.ShouldEmbargo(filename3) {
-		t.Error("ShouldEmbargo(%s) = true, but before embargo date(%d).\n", filename3,  embargo_check.Embargodate)
+		t.Error("ShouldEmbargo(%s) = true, but before embargo date(%d).\n", filename3, embargo_check.Embargodate)
 	}
 	return
 }

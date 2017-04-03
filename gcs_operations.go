@@ -27,12 +27,10 @@ import (
 	storage "google.golang.org/api/storage/v1"
 )
 
-var service = createService()
-
 // Create GCS service used by the following functions.
-func createService() *storage.Service {
-        // This scope allows the application full control over resources in Google Cloud Storage
-        var scope = storage.DevstorageFullControlScope
+func CreateService() *storage.Service {
+	// This scope allows the application full control over resources in Google Cloud Storage
+	var scope = storage.DevstorageFullControlScope
 	client, err := google.DefaultClient(context.Background(), scope)
 	if err != nil {
 		fmt.Printf("Unable to get default storage client: %v \n", err)
@@ -48,6 +46,7 @@ func createService() *storage.Service {
 
 // Create a new bucket. Return true if it already exsits or is created successfully.
 func CreateBucket(projectID string, bucketName string) bool {
+	service := CreateService()
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		return false
@@ -69,6 +68,7 @@ func CreateBucket(projectID string, bucketName string) bool {
 
 // Given the bucket name, return array of file names in that bucket. ("ls")
 func GetFileNamesFromBucket(bucketName string) []string {
+	service := CreateService()
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		return nil
@@ -98,6 +98,7 @@ func GetFileNamesFromBucket(bucketName string) []string {
 
 // Delete all files with specified prefix from bucket. ("rm")
 func DeleteFiles(bucketName string, prefixFileName string) bool {
+	service := CreateService()
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		return false
@@ -135,26 +136,39 @@ func DeleteFiles(bucketName string, prefixFileName string) bool {
 			break
 		}
 	}
-        return true
+	return true
 }
 
 // Delete the bucket if it is empty. ("rmdir")
 func DeleteBucket(bucketName string) bool {
-        sourceFiles, err := service.Objects.List(bucketName).Do()
-        if err != nil {
+	service := CreateService()
+	if service == nil {
+		fmt.Printf("Storage service was not initialized.\n")
+		return false
+	}
+
+	sourceFiles, err := service.Objects.List(bucketName).Do()
+	if err != nil {
 		return false
 	}
 	if len(sourceFiles.Items) == 0 {
 		if err := service.Buckets.Delete(bucketName).Do(); err != nil {
 			fmt.Printf("Could not delete bucket %v\n", err)
 			return false
+		} else {
+			fmt.Printf("Delete bucket %s successfully.\n", bucketName)
+			return true
 		}
+	} else {
+		fmt.Printf("Could not delete non empty bucket %v\n", bucketName)
+		return false
 	}
-	return true
+
 }
 
 // Upload one file from local path to bucket. ("cp")
 func UploadFile(bucketName string, fileName string) bool {
+	service := CreateService()
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		return false
@@ -176,6 +190,7 @@ func UploadFile(bucketName string, fileName string) bool {
 
 // Copy one file from one bucket to another bucket. Return true if succeed. ("cp")
 func CopyOneFile(sourceBucket string, destBucket string, fileName string) bool {
+	service := CreateService()
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		return false
@@ -195,6 +210,7 @@ func CopyOneFile(sourceBucket string, destBucket string, fileName string) bool {
 // Copy all files with PrefixFileName from SourceBucke to DestBucket if there
 // is no one yet. Return true if succeed.
 func SyncTwoBuckets(sourceBucket string, destBucket string, prefixFileName string) bool {
+	service := CreateService()
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		return false
@@ -263,6 +279,7 @@ func SyncTwoBuckets(sourceBucket string, destBucket string, prefixFileName strin
 
 // Compare whether 2 buckets have exactly same content. Return true if they are the same.
 func CompareBuckets(sourceBucket string, destBucket string) bool {
+	service := CreateService()
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
 		return false
@@ -309,7 +326,7 @@ func CompareBuckets(sourceBucket string, destBucket string) bool {
 				existingFilenames[oneItem.Name] = false
 				continue
 			} else {
-                                fmt.Printf("Here is a file in sourceBucket but not in destBucket: %s", oneItem.Name)
+				fmt.Printf("Here is a file in sourceBucket but not in destBucket: %s", oneItem.Name)
 				return false
 			}
 
@@ -323,11 +340,10 @@ func CompareBuckets(sourceBucket string, destBucket string) bool {
 	// Go through map existingFilenames[] to see whether all of them are flipped to false.
 	for fileName := range existingFilenames {
 		if existingFilenames[fileName] == true {
-                        fmt.Printf("Here is a file in destBucket but not in sourceBucket: %s", fileName)
+			fmt.Printf("Here is a file in destBucket but not in sourceBucket: %s", fileName)
 			return false
 		}
 	}
 
 	return true
 }
-

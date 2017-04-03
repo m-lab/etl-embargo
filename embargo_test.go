@@ -22,6 +22,8 @@ func TestEmbargo(t *testing.T) {
 */
 
 func TestSplitTarFile(t *testing.T) {
+	embargoCheck.ReadWhitelistFromLocal("testdata/whitelist_full")
+	embargoCheck.Embargodate = 20160315
 	// Load input tar file.
 	file, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz")
 	if err != nil {
@@ -50,6 +52,6 @@ func TestSplitTarFile(t *testing.T) {
 	defer privateGolden.Close()
 	privateContent, err := ioutil.ReadAll(privateGolden)
 	if !bytes.Equal(privateBuf.Bytes(), privateContent) {
-		t.Error("Public data not correct.\n")
+		t.Error("Private data not correct.\n")
 	}
 }

@@ -44,8 +44,6 @@ func WriteResults(tarfileName string, service *storage.Service, privateBuf, publ
 func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
 	var privateBuf bytes.Buffer
 	var publicBuf bytes.Buffer
-	embargoCheck.ReadWhitelistFromGCS("whitelist")
-	embargoCheck.Embargodate = embargoDate
 	// Create tar reader
 	zipReader, err := gzip.NewReader(content)
 	if err != nil {
@@ -145,7 +143,8 @@ func Embargo() bool {
 		fmt.Printf("Storage service was not initialized.\n")
 		return false
 	}
-
+	embargoCheck.ReadWhitelistFromGCS("whitelist")
+	embargoCheck.Embargodate = embargoDate
 	sourceFiles := embargoService.Objects.List(sourceBucket)
 	sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
 	if err != nil {

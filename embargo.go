@@ -41,20 +41,20 @@ func WriteResults(tarfileName string, service *storage.Service, privateBuf, publ
 }
 
 // Split one tar files into 2 buffers.
-func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
+func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 	var privateBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
 	zipReader, err := gzip.NewReader(content)
 	if err != nil {
 		fmt.Println(err)
-		return false, privateBuf, publicBuf
+		return privateBuf, publicBuf, err
 	}
 	defer zipReader.Close()
 	unzippedImage, err := ioutil.ReadAll(zipReader)
 	if err != nil {
 		fmt.Println(err)
-		return false, privateBuf, publicBuf
+		return privateBuf, publicBuf, err
 	}
 	unzippedReader := bytes.NewReader(unzippedImage)
 	tarReader := tar.NewReader(unzippedReader)
@@ -72,7 +72,7 @@ func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
 		}
 		if err != nil {
 			fmt.Println(err)
-			return false, privateBuf, publicBuf
+			return privateBuf, publicBuf, err
 		}
 		basename := filepath.Base(header.Name)
 		info := header.FileInfo()
@@ -86,11 +86,11 @@ func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
 			// put this file to a private buffer
 			if err := privateTw.WriteHeader(hdr); err != nil {
 				fmt.Println(err)
-				return false, privateBuf, publicBuf
+				return privateBuf, publicBuf, err
 			}
 			if _, err := privateTw.Write([]byte(output)); err != nil {
 				fmt.Println(err)
-				return false, privateBuf, publicBuf
+				return privateBuf, publicBuf, err
 			}
 		} else {
 			// put this file to a public buffer
@@ -99,28 +99,28 @@ func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
 			}
 			if _, err := publicTw.Write([]byte(output)); err != nil {
 				fmt.Println(err)
-				return false, privateBuf, publicBuf
+				return privateBuf, publicBuf, err
 			}
 		}
 	}
 
 	if err := publicTw.Close(); err != nil {
 		fmt.Println(err)
-		return false, privateBuf, publicBuf
+		return privateBuf, publicBuf, err
 	}
 	if err := privateTw.Close(); err != nil {
 		fmt.Println(err)
-		return false, privateBuf, publicBuf
+		return privateBuf, publicBuf, err
 	}
 	if err := publicGzw.Close(); err != nil {
 		fmt.Println(err)
-		return false, privateBuf, publicBuf
+		return privateBuf, publicBuf, err
 	}
 	if err := privateGzw.Close(); err != nil {
 		fmt.Println(err)
-		return false, privateBuf, publicBuf
+		return privateBuf, publicBuf, err
 	}
-	return true, privateBuf, publicBuf
+	return privateBuf, publicBuf, nil
 }
 
 // EmbargoOneTar process one tar file, split it to 2 files, the embargoed files
@@ -129,8 +129,8 @@ func SplitFile(content io.Reader) (bool, bytes.Buffer, bytes.Buffer) {
 // The private file will have a different name, so it can be copied to public
 // bucket directly when it becomes one year old.
 func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Service) bool {
-	suc, privateBuf, publicBuf := SplitFile(content)
-	if suc && WriteResults(tarfileName, service, privateBuf, publicBuf) {
+	privateBuf, publicBuf, err := embargoBuf(content)
+	if err == nil && WriteResults(tarfileName, service, privateBuf, publicBuf) {
 		return true
 	}
 	return false

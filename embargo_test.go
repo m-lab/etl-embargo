@@ -2,7 +2,6 @@ package embargo
 
 import (
 	"bytes"
-        "fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -32,8 +31,8 @@ func TestSplitTarFile(t *testing.T) {
 	}
 	defer file.Close()
 
-	suc, privateBuf, publicBuf := SplitFile(file)
-	if !suc {
+	privateBuf, publicBuf, err := embargoBuf(file)
+	if err != nil {
 		t.Error("Did not perform embargo ocrrectly.\n")
 	}
 	publicGolden, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000-p.tgz")
@@ -44,9 +43,7 @@ func TestSplitTarFile(t *testing.T) {
 	publicContent, err := ioutil.ReadAll(publicGolden)
 	if !bytes.Equal(publicBuf.Bytes(), publicContent) {
 		t.Error("Public data not correct.\n")
-	} else {
-                fmt.Println("correct")
-        }
+	}
 
 	privateGolden, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000-e.tgz")
 	if err != nil {

@@ -167,7 +167,7 @@ func DeleteBucket(bucketName string) bool {
 }
 
 // Upload one file from local path to bucket. ("cp")
-func UploadFile(bucketName string, fileName string) bool {
+func UploadFile(bucketName string, fileName string, targetdir string) bool {
 	service := CreateService()
 	if service == nil {
 		fmt.Printf("Storage service was not initialized.\n")
@@ -179,7 +179,7 @@ func UploadFile(bucketName string, fileName string) bool {
 		fmt.Printf("Error opening local file %s: %v\n", fileName, err)
 		return false
 	}
-	object := &storage.Object{Name: filepath.Base(fileName)}
+	object := &storage.Object{Name: targetdir + filepath.Base(fileName)}
 	if res, err := service.Objects.Insert(bucketName, object).Media(file).Do(); err == nil {
 		fmt.Printf("Created object %v at location %v\n", res.Name, res.SelfLink)
 		return true

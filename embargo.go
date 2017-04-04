@@ -5,9 +5,9 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -29,12 +29,12 @@ func WriteResults(tarfileName string, service *storage.Service, privateBuf, publ
 	publicObject := &storage.Object{Name: tarfileName}
 	privateObject := &storage.Object{Name: privateTarfileName}
 	if _, err := service.Objects.Insert(destPublicBucket, publicObject).Media(&publicBuf).Do(); err != nil {
-		fmt.Printf("Objects insert failed: %v\n", err)
+		log.Printf("Objects insert failed: %v\n", err)
 		return false
 	}
 
 	if _, err := service.Objects.Insert(destPrivateBucket, privateObject).Media(&privateBuf).Do(); err != nil {
-		fmt.Printf("Objects insert failed: %v\n", err)
+		log.Printf("Objects insert failed: %v\n", err)
 		return false
 	}
 	return true
@@ -47,16 +47,16 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 	// Create tar reader
 	zipReader, err := gzip.NewReader(content)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("zip reader failed to be created: %v\n", err)
 		return privateBuf, publicBuf, err
 	}
 	defer zipReader.Close()
-	unzippedImage, err := ioutil.ReadAll(zipReader)
+	unzippedBytes, err := ioutil.ReadAll(zipReader)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("cannot read the bytes from zip reader: %v\n", err)
 		return privateBuf, publicBuf, err
 	}
-	unzippedReader := bytes.NewReader(unzippedImage)
+	unzippedReader := bytes.NewReader(unzippedBytes)
 	tarReader := tar.NewReader(unzippedReader)
 
 	privateGzw := gzip.NewWriter(&privateBuf)
@@ -64,14 +64,13 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 	privateTw := tar.NewWriter(privateGzw)
 	publicTw := tar.NewWriter(publicGzw)
 
-	// Handle one tar file
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("can not read the header file correctly: %v\n", err)
 			return privateBuf, publicBuf, err
 		}
 		basename := filepath.Base(header.Name)
@@ -85,39 +84,39 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 		if strings.Contains(basename, "web100") && embargoCheck.ShouldEmbargo(basename) {
 			// put this file to a private buffer
 			if err := privateTw.WriteHeader(hdr); err != nil {
-				fmt.Println(err)
+				log.Printf("cannot write the embargoed header: %v\n", err)
 				return privateBuf, publicBuf, err
 			}
 			if _, err := privateTw.Write([]byte(output)); err != nil {
-				fmt.Println(err)
+				log.Printf("cannot write the embargoed content to a buffer: %v\n", err)
 				return privateBuf, publicBuf, err
 			}
 		} else {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
-				fmt.Println(err)
+				log.Printf("cannot write the public header: %v\n", err)
 			}
 			if _, err := publicTw.Write([]byte(output)); err != nil {
-				fmt.Println(err)
+				log.Printf("cannot write the public content to a buffer: %v\n", err)
 				return privateBuf, publicBuf, err
 			}
 		}
 	}
 
 	if err := publicTw.Close(); err != nil {
-		fmt.Println(err)
+		log.Printf("cannot close tar writer", err)
 		return privateBuf, publicBuf, err
 	}
 	if err := privateTw.Close(); err != nil {
-		fmt.Println(err)
+		log.Printf("cannot close tar writer", err)
 		return privateBuf, publicBuf, err
 	}
 	if err := publicGzw.Close(); err != nil {
-		fmt.Println(err)
+		log.Printf("cannot close tar writer", err)
 		return privateBuf, publicBuf, err
 	}
 	if err := privateGzw.Close(); err != nil {
-		fmt.Println(err)
+		log.Printf("cannot close tar writer", err)
 		return privateBuf, publicBuf, err
 	}
 	return privateBuf, publicBuf, nil
@@ -137,18 +136,23 @@ func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Servi
 }
 
 // Embargo do embargo ckecking to all files in the sourceBucket.
-func Embargo() bool {
+// The input date is in format yyyy/mm/dd
+// TODO: handle midway crash. Since the source bucket is unchanged, if it failed
+// in the middle, we just rerun it for that specific day.
+func EmbargoOneDayData(date string) bool {
 	embargoService := CreateService()
 	if embargoService == nil {
-		fmt.Printf("Storage service was not initialized.\n")
+		log.Printf("Storage service was not initialized.\n")
 		return false
 	}
+
 	embargoCheck.ReadWhitelistFromGCS("whitelist")
 	embargoCheck.Embargodate = embargoDate
 	sourceFiles := embargoService.Objects.List(sourceBucket)
+	sourceFiles.Prefix("sidestream/" + date)
 	sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
 	if err != nil {
-		fmt.Printf("Objects List of source bucket failed: %v\n", err)
+		log.Printf("Objects List of source bucket failed: %v\n", err)
 		return false
 	}
 	for _, oneItem := range sourceFilesList.Items {
@@ -159,7 +163,7 @@ func Embargo() bool {
 
 		fileContent, err := embargoService.Objects.Get(sourceBucket, oneItem.Name).Download()
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("fail to read a tar file from the bucket: %v\n", err)
 			return false
 		}
 		if !EmbargoOneTar(fileContent.Body, oneItem.Name, embargoService) {

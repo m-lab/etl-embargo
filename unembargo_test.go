@@ -54,9 +54,6 @@ func TestCalculateDate(t *testing.T) {
 	if CheckWhetherUnembargo(current_time) {
 		t.Error("The current date should return false for unembargo check.")
 	}
-	if CheckWhetherUnembargo(20161102) {
-		t.Error("The current date should return false for unembargo check.")
-	}
 	if !CheckWhetherUnembargo(20060129) {
 		t.Error("This last year date should return true for unembargo check.")
 	}

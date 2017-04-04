@@ -1,3 +1,16 @@
+/*
+Copyright 2013 Google Inc.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+	http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 // Implement the umembargo process when the previously embargoed files are more than one year old.
 package embargo
 
@@ -40,11 +53,16 @@ var (
 	publicBucket  = ""
 )
 
-// Given the current date, return date oneyear ago in format yyyy/mm/dd
-func CalculateUnembargoDate() string {
-	current_time := time.Now().UTC().Format("2006/01/02")
-	year, _ := strconv.Atoi(current_time[0:4])
-	return strconv.Itoa(int(year-1)) + current_time[4:len(current_time)]
+// Given the current date, return true if the date is more than oneyear ago.
+// The input date is integer in format yyyymmdd
+func CheckWhetherUnembargo(date int) bool {
+	current_time := time.Now().UTC().Format("2006-01-02")
+	current_year, _ := strconv.Atoi(current_time[0:4])
+	cutoff_date, _ := strconv.Atoi(strconv.Itoa(int(current_year-1)) + current_time[5:7] + current_time[8:10])
+	if date < cutoff_date {
+		return true
+	}
+	return false
 }
 
 // The date is used as prefixFileName in format sidestream/yyyy/mm/dd
@@ -124,4 +142,17 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 	}
 
 	return true
+}
+
+// The input date is integer in format yyyymmdd
+func Unembargo(date int) bool {
+	if CheckWhetherUnembargo(date) {
+		date_str := strconv.Itoa(date)
+		input_dir := "sidestream/" + date_str[0:4] + "/" + date_str[4:6] + "/" + date_str[6:8]
+		if UnEmbargoOneDayLegacyFiles(privateBucket, publicBucket, input_dir) {
+			return true
+		}
+		return false
+	}
+	return false
 }

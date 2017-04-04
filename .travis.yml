@@ -4,3 +4,4 @@ script:
 - go test -v -run Get
 - go test -v -run Read
 - go test -v -run Should
+- go test -v -run Cal

@@ -28,7 +28,7 @@ func TestUnembargoLegacy(t *testing.T) {
 	DeleteFiles(privateBucket, "")
 	UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")
 	DeleteFiles(publicBucket, "")
-	if Unembargo(20160102) {
+	if Unembargo(20160102) == nil {
 		// Check the privateBucket does not have that file any more
 		fileNames := GetFileNamesFromBucket(privateBucket)
 		for _, fileName := range fileNames {

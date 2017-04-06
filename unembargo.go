@@ -44,6 +44,8 @@ import (
 	"fmt"
 	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
+	"log"
+	"os"
 	"strconv"
 	"time"
 )
@@ -66,11 +68,11 @@ func CheckWhetherUnembargo(date int) bool {
 }
 
 // The date is used as prefixFileName in format sidestream/yyyy/mm/dd
-func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFileName string) bool {
+func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFileName string) error {
 	unembargoService := CreateService()
 	if unembargoService == nil {
-		fmt.Printf("Storage service was not initialized.\n")
-		return false
+		log.Printf("Storage service was not initialized.\n")
+		return fmt.Errorf("Storage service was not initialized.\n")
 	}
 
 	// Build list of exisitng files in destination bucket.
@@ -84,8 +86,8 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 		destinationFiles.Prefix(prefixFileName)
 		destinationFilesList, err := destinationFiles.Context(context.Background()).Do()
 		if err != nil {
-			fmt.Printf("Objects.List failed: %v\n", err)
-			return false
+			log.Printf("Objects.List failed: %v\n", err)
+			return err
 		}
 		for _, oneItem := range destinationFilesList.Items {
 			existingFilenames[oneItem.Name] = true
@@ -107,16 +109,16 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 		}
 		sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
 		if err != nil {
-			fmt.Printf("Objects List of source bucket failed: %v\n", err)
-			return false
+			log.Printf("Objects List of source bucket failed: %v\n", err)
+			return err
 		}
 		for _, oneItem := range sourceFilesList.Items {
 			if existingFilenames[oneItem.Name] {
 				// Delete the exisitng file in destBucket.
 				result := unembargoService.Objects.Delete(destBucket, oneItem.Name).Do()
 				if result != nil {
-					fmt.Printf("Objects deletion from public bucket failed: %v\n", err)
-					return false
+					log.Printf("Objects deletion from public bucket failed.\n")
+					return fmt.Errorf("Objects deletion from public bucket failed.\n")
 				}
 			}
 			if fileContent, err := unembargoService.Objects.Get(sourceBucket, oneItem.Name).Download(); err == nil {
@@ -124,15 +126,15 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 				object := &storage.Object{Name: oneItem.Name}
 				_, err := unembargoService.Objects.Insert(destBucket, object).Media(fileContent.Body).Do()
 				if err != nil {
-					fmt.Printf("Objects insert failed: %v\n", err)
-					return false
+					log.Printf("Objects insert failed: %v\n", err)
+					return err
 				}
 			}
 			// Delete the file in private bucket
 			result := unembargoService.Objects.Delete(sourceBucket, oneItem.Name).Do()
 			if result != nil {
-				fmt.Printf("Objects deletion from private bucket failed: %v\n", err)
-				return false
+				log.Printf("Objects deletion from private bucket failed.\n")
+				return fmt.Errorf("Objects deletion from private bucket failed.\n")
 			}
 		}
 		pageToken = sourceFilesList.NextPageToken
@@ -141,18 +143,24 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 		}
 	}
 
-	return true
+	return nil
 }
 
 // The input date is integer in format yyyymmdd
-func Unembargo(date int) bool {
+func Unembargo(date int) error {
+	f, err := os.OpenFile("UnembargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+		return err
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	if CheckWhetherUnembargo(date) {
 		date_str := strconv.Itoa(date)
 		input_dir := "sidestream/" + date_str[0:4] + "/" + date_str[4:6] + "/" + date_str[6:8]
-		if UnEmbargoOneDayLegacyFiles(privateBucket, publicBucket, input_dir) {
-			return true
-		}
-		return false
+		return UnEmbargoOneDayLegacyFiles(privateBucket, publicBucket, input_dir)
 	}
-	return false
+	return fmt.Errorf("Date is too new, not qualified for unembargo.")
 }

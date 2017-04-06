@@ -8,7 +8,7 @@ import (
 )
 
 // End to end test, requires authentication.
-// TODO: enbale it on Travis.
+// TODO: Enable it on Travis.
 func TestEmbargo(t *testing.T) {
 	embargoDate = 20160315
 	sourceBucket = "sidestream-embargo"
@@ -26,6 +26,9 @@ func TestEmbargo(t *testing.T) {
 // This test verified that func embargoBuf() correctly split the input tar
 // file into 2 tar files: one contains the embargoed web100 files, the other
 // contains the files that can be published.
+// TODO: a cleaner way to test this would be to create a tar file on the fly, 
+// with lists of inner files, call SplitFile on it, then verify that the pub
+// and private buffers contain the correct filenames.
 func TestSplitTarFile(t *testing.T) {
 	embargoCheck.ReadWhitelistFromLocal("testdata/whitelist_full")
 	embargoCheck.Embargodate = 20160315

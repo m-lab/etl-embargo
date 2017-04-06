@@ -152,6 +152,7 @@ func EmbargoOneDayData(date string) error {
 
 	log.SetOutput(f)
 
+	// TODO: Create service in a Singleton object, and reuses them for all GCS requests.
 	embargoService := CreateService()
 	if embargoService == nil {
 		log.Printf("Storage service was not initialized.\n")

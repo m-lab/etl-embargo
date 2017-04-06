@@ -16,8 +16,8 @@ func TestEmbargo(t *testing.T) {
 	destPrivateBucket = "mlab-embargoed-data"
 	DeleteFiles(sourceBucket, "")
 	UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
-	if !EmbargoOneDayData("2017/03/15") {
-		t.Error("Did not perform embargo ocrrectly.\n")
+	if EmbargoOneDayData("2017/03/15") != nil {
+		t.Error("Did not perform embargo correctly.\n")
 	}
 	DeleteFiles(sourceBucket, "")
 	return

@@ -5,9 +5,11 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -59,11 +61,12 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 	unzippedReader := bytes.NewReader(unzippedBytes)
 	tarReader := tar.NewReader(unzippedReader)
 
-	privateGzw := gzip.NewWriter(&embargoBuf)
+	embargoGzw := gzip.NewWriter(&embargoBuf)
 	publicGzw := gzip.NewWriter(&publicBuf)
-	privateTw := tar.NewWriter(privateGzw)
+	embargoTw := tar.NewWriter(embargoGzw)
 	publicTw := tar.NewWriter(publicGzw)
 
+	// Handle the small files inside one tar file.
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -83,11 +86,11 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 		output, err := ioutil.ReadAll(tarReader)
 		if strings.Contains(basename, "web100") && embargoCheck.ShouldEmbargo(basename) {
 			// put this file to a private buffer
-			if err := privateTw.WriteHeader(hdr); err != nil {
+			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
-			if _, err := privateTw.Write([]byte(output)); err != nil {
+			if _, err := embargoTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the embargoed content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
@@ -107,7 +110,7 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 		log.Printf("cannot close tar writer", err)
 		return embargoBuf, publicBuf, err
 	}
-	if err := privateTw.Close(); err != nil {
+	if err := embargoTw.Close(); err != nil {
 		log.Printf("cannot close tar writer", err)
 		return embargoBuf, publicBuf, err
 	}
@@ -115,16 +118,16 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 		log.Printf("cannot close tar writer", err)
 		return embargoBuf, publicBuf, err
 	}
-	if err := privateGzw.Close(); err != nil {
+	if err := embargoGzw.Close(); err != nil {
 		log.Printf("cannot close tar writer", err)
 		return embargoBuf, publicBuf, err
 	}
 	return embargoBuf, publicBuf, nil
 }
 
-// EmbargoOneTar process one tar file, split it to 2 files, the embargoed files
-// will be saved in a private dir, and the unembargoed part will be save in a
-// public dir.
+// EmbargoOneTar processes one tar file, splits it to 2 files. The embargoed files
+// will be saved in a private bucket, and the unembargoed part will be save in a
+// public bucket.
 // The private file will have a different name, so it can be copied to public
 // bucket directly when it becomes one year old.
 func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Service) bool {
@@ -139,11 +142,20 @@ func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Servi
 // The input date is in format yyyy/mm/dd
 // TODO: handle midway crash. Since the source bucket is unchanged, if it failed
 // in the middle, we just rerun it for that specific day.
-func EmbargoOneDayData(date string) bool {
+func EmbargoOneDayData(date string) error {
+	f, err := os.OpenFile("EmbargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+		return err
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	embargoService := CreateService()
 	if embargoService == nil {
 		log.Printf("Storage service was not initialized.\n")
-		return false
+		return fmt.Errorf("Storage service was not initialized.\n")
 	}
 
 	embargoCheck.ReadWhitelistFromGCS("whitelist")
@@ -153,7 +165,7 @@ func EmbargoOneDayData(date string) bool {
 	sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
 	if err != nil {
 		log.Printf("Objects List of source bucket failed: %v\n", err)
-		return false
+		return err
 	}
 	for _, oneItem := range sourceFilesList.Items {
 		//fmt.Printf(oneItem.Name + "\n")
@@ -164,11 +176,11 @@ func EmbargoOneDayData(date string) bool {
 		fileContent, err := embargoService.Objects.Get(sourceBucket, oneItem.Name).Download()
 		if err != nil {
 			log.Printf("fail to read a tar file from the bucket: %v\n", err)
-			return false
+			return err
 		}
 		if !EmbargoOneTar(fileContent.Body, oneItem.Name, embargoService) {
-			return false
+			return err
 		}
 	}
-	return true
+	return err
 }

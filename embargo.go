@@ -24,16 +24,16 @@ var (
 )
 
 // Write results to GCS.
-func WriteResults(tarfileName string, service *storage.Service, privateBuf, publicBuf bytes.Buffer) error {
-	privateTarfileName := strings.Replace(tarfileName, ".tgz", "-e.tgz", -1)
+func WriteResults(tarfileName string, service *storage.Service, embargoBuf, publicBuf bytes.Buffer) error {
+	embargoTarfileName := strings.Replace(tarfileName, ".tgz", "-e.tgz", -1)
 	publicObject := &storage.Object{Name: tarfileName}
-	privateObject := &storage.Object{Name: privateTarfileName}
+	embargoObject := &storage.Object{Name: embargoTarfileName}
 	if _, err := service.Objects.Insert(destPublicBucket, publicObject).Media(&publicBuf).Do(); err != nil {
 		log.Printf("Objects insert failed: %v\n", err)
 		return err
 	}
 
-	if _, err := service.Objects.Insert(destPrivateBucket, privateObject).Media(&privateBuf).Do(); err != nil {
+	if _, err := service.Objects.Insert(destPrivateBucket, embargoObject).Media(&embargoBuf).Do(); err != nil {
 		log.Printf("Objects insert failed: %v\n", err)
 		return err
 	}
@@ -42,24 +42,24 @@ func WriteResults(tarfileName string, service *storage.Service, privateBuf, publ
 
 // Split one tar files into 2 buffers.
 func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
-	var privateBuf bytes.Buffer
+	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
 	zipReader, err := gzip.NewReader(content)
 	if err != nil {
 		log.Printf("zip reader failed to be created: %v\n", err)
-		return privateBuf, publicBuf, err
+		return embargoBuf, publicBuf, err
 	}
 	defer zipReader.Close()
 	unzippedBytes, err := ioutil.ReadAll(zipReader)
 	if err != nil {
 		log.Printf("cannot read the bytes from zip reader: %v\n", err)
-		return privateBuf, publicBuf, err
+		return embargoBuf, publicBuf, err
 	}
 	unzippedReader := bytes.NewReader(unzippedBytes)
 	tarReader := tar.NewReader(unzippedReader)
 
-	privateGzw := gzip.NewWriter(&privateBuf)
+	privateGzw := gzip.NewWriter(&embargoBuf)
 	publicGzw := gzip.NewWriter(&publicBuf)
 	privateTw := tar.NewWriter(privateGzw)
 	publicTw := tar.NewWriter(publicGzw)
@@ -71,7 +71,7 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 		}
 		if err != nil {
 			log.Printf("can not read the header file correctly: %v\n", err)
-			return privateBuf, publicBuf, err
+			return embargoBuf, publicBuf, err
 		}
 		basename := filepath.Base(header.Name)
 		info := header.FileInfo()
@@ -85,11 +85,11 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 			// put this file to a private buffer
 			if err := privateTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
-				return privateBuf, publicBuf, err
+				return embargoBuf, publicBuf, err
 			}
 			if _, err := privateTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the embargoed content to a buffer: %v\n", err)
-				return privateBuf, publicBuf, err
+				return embargoBuf, publicBuf, err
 			}
 		} else {
 			// put this file to a public buffer
@@ -98,28 +98,28 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 			}
 			if _, err := publicTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the public content to a buffer: %v\n", err)
-				return privateBuf, publicBuf, err
+				return embargoBuf, publicBuf, err
 			}
 		}
 	}
 
 	if err := publicTw.Close(); err != nil {
 		log.Printf("cannot close tar writer", err)
-		return privateBuf, publicBuf, err
+		return embargoBuf, publicBuf, err
 	}
 	if err := privateTw.Close(); err != nil {
 		log.Printf("cannot close tar writer", err)
-		return privateBuf, publicBuf, err
+		return embargoBuf, publicBuf, err
 	}
 	if err := publicGzw.Close(); err != nil {
 		log.Printf("cannot close tar writer", err)
-		return privateBuf, publicBuf, err
+		return embargoBuf, publicBuf, err
 	}
 	if err := privateGzw.Close(); err != nil {
 		log.Printf("cannot close tar writer", err)
-		return privateBuf, publicBuf, err
+		return embargoBuf, publicBuf, err
 	}
-	return privateBuf, publicBuf, nil
+	return embargoBuf, publicBuf, nil
 }
 
 // EmbargoOneTar process one tar file, split it to 2 files, the embargoed files
@@ -128,8 +128,8 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 // The private file will have a different name, so it can be copied to public
 // bucket directly when it becomes one year old.
 func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Service) bool {
-	privateBuf, publicBuf, err := embargoBuf(content)
-	if err == nil && WriteResults(tarfileName, service, privateBuf, publicBuf) == nil {
+	embargoBuf, publicBuf, err := embargoBuf(content)
+	if err == nil && WriteResults(tarfileName, service, embargoBuf, publicBuf) == nil {
 		return true
 	}
 	return false

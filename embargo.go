@@ -24,20 +24,20 @@ var (
 )
 
 // Write results to GCS.
-func WriteResults(tarfileName string, service *storage.Service, privateBuf, publicBuf bytes.Buffer) bool {
+func WriteResults(tarfileName string, service *storage.Service, privateBuf, publicBuf bytes.Buffer) error {
 	privateTarfileName := strings.Replace(tarfileName, ".tgz", "-e.tgz", -1)
 	publicObject := &storage.Object{Name: tarfileName}
 	privateObject := &storage.Object{Name: privateTarfileName}
 	if _, err := service.Objects.Insert(destPublicBucket, publicObject).Media(&publicBuf).Do(); err != nil {
 		log.Printf("Objects insert failed: %v\n", err)
-		return false
+		return err
 	}
 
 	if _, err := service.Objects.Insert(destPrivateBucket, privateObject).Media(&privateBuf).Do(); err != nil {
 		log.Printf("Objects insert failed: %v\n", err)
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
 // Split one tar files into 2 buffers.
@@ -129,7 +129,7 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 // bucket directly when it becomes one year old.
 func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Service) bool {
 	privateBuf, publicBuf, err := embargoBuf(content)
-	if err == nil && WriteResults(tarfileName, service, privateBuf, publicBuf) {
+	if err == nil && WriteResults(tarfileName, service, privateBuf, publicBuf) == nil {
 		return true
 	}
 	return false

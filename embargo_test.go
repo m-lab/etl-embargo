@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-
 // End to end test, requires authentication.
 // TODO: enbale it on Travis.
 func TestEmbargo(t *testing.T) {
@@ -15,12 +14,12 @@ func TestEmbargo(t *testing.T) {
 	sourceBucket = "sidestream-embargo"
 	destPublicBucket = "embargo-output"
 	destPrivateBucket = "mlab-embargoed-data"
-        DeleteFiles(sourceBucket, "")
-        UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
+	DeleteFiles(sourceBucket, "")
+	UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
 	if !EmbargoOneDayData("2017/03/15") {
 		t.Error("Did not perform embargo ocrrectly.\n")
 	}
-        DeleteFiles(sourceBucket, "")
+	DeleteFiles(sourceBucket, "")
 	return
 }
 

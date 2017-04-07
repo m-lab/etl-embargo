@@ -182,9 +182,8 @@ func EmbargoOneDayData(date string) error {
 			log.Printf("fail to read a tar file from the bucket: %v\n", err)
 			return err
 		}
-		result := EmbargoOneTar(fileContent.Body, oneItem.Name, embargoService)
-		if result != nil {
-			return result
+		if err := EmbargoOneTar(fileContent.Body, oneItem.Name, embargoService); err != nil {
+			return err
 		}
 	}
 	return nil

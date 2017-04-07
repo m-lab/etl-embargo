@@ -43,7 +43,7 @@ func WriteResults(tarfileName string, service *storage.Service, embargoBuf, publ
 }
 
 // Split one tar files into 2 buffers.
-func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
+func SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
@@ -130,12 +130,12 @@ func embargoBuf(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 // public bucket.
 // The private file will have a different name, so it can be copied to public
 // bucket directly when it becomes one year old.
-func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Service) bool {
-	embargoBuf, publicBuf, err := embargoBuf(content)
+func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Service) error {
+	embargoBuf, publicBuf, err := SplitFile(content)
 	if err == nil && WriteResults(tarfileName, service, embargoBuf, publicBuf) == nil {
-		return true
+		return nil
 	}
-	return false
+	return err
 }
 
 // Embargo do embargo ckecking to all files in the sourceBucket.
@@ -179,9 +179,10 @@ func EmbargoOneDayData(date string) error {
 			log.Printf("fail to read a tar file from the bucket: %v\n", err)
 			return err
 		}
-		if !EmbargoOneTar(fileContent.Body, oneItem.Name, embargoService) {
-			return err
+		result := EmbargoOneTar(fileContent.Body, oneItem.Name, embargoService)
+		if result != nil {
+			return result
 		}
 	}
-	return err
+	return nil
 }

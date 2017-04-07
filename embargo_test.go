@@ -23,7 +23,7 @@ func TestEmbargo(t *testing.T) {
 	return
 }
 
-// This test verified that func embargoBuf() correctly split the input tar
+// This test verifies that func embargoBuf() correctly splits the input tar
 // file into 2 tar files: one contains the embargoed web100 files, the other
 // contains the files that can be published.
 // TODO: a cleaner way to test this would be to create a tar file on the fly,

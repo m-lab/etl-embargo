@@ -87,7 +87,7 @@ func SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 		hdr.Mode = int64(info.Mode())
 		hdr.ModTime = info.ModTime()
 		output, err := ioutil.ReadAll(tarReader)
-		if strings.Contains(basename, "web100") && embargoCheck.ShouldEmbargo(basename) {
+		if embargoCheck.ShouldEmbargo(basename) {
 			// put this file to a private buffer
 			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
@@ -101,6 +101,7 @@ func SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
+				return embargoBuf, publicBuf, err
 			}
 			if _, err := publicTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the public content to a buffer: %v\n", err)

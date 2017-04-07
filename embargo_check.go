@@ -70,6 +70,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
 
 // EmbargoCheck decide whether to embargo it based on embargo date and IP
 // whitelist given a filename of sidestream test.
+// Always return false for non-web100 files.
 // The filename is like: 20170225T23:00:00Z_4.34.58.34_0.web100
 // THe embargo date is like 20160225
 // file with date on or before the embargo date are always published. Return false
@@ -78,6 +79,9 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
 // For old file format like 2017/03/15/mlab3.sea03/20170315T12:00:00Z_ALL0.web100
 // it will return true always.
 func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
+	if !strings.Contains(fileName, "web100") {
+		return false
+	}
 	if len(fileName) < 8 {
 		log.Println("Filename not with right length.\n")
 		return true

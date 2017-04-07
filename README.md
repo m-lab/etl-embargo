@@ -1,1 +1,1 @@
-Open source Go Package for GCS operations.
+This is the package for embargo process on cloud paltform.

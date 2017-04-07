@@ -67,6 +67,32 @@ func CheckWhetherUnembargo(date int) bool {
 	return false
 }
 
+// Get filenames for given bucket with the given prefix. Use the service
+func GetFileNamesWithPrefix(service *storage.Service, bucketName string, prefixFileName string) (map[string]bool, error) {
+	existingFilenames := make(map[string]bool)
+	destPageToken := ""
+	for {
+		destinationFiles := service.Objects.List(bucketName)
+		if destPageToken != "" {
+			destinationFiles.PageToken(destPageToken)
+		}
+		destinationFiles.Prefix(prefixFileName)
+		destinationFilesList, err := destinationFiles.Context(context.Background()).Do()
+		if err != nil {
+			log.Printf("Objects.List failed: %v\n", err)
+			return existingFilenames, err
+		}
+		for _, oneItem := range destinationFilesList.Items {
+			existingFilenames[oneItem.Name] = true
+		}
+		destPageToken = destinationFilesList.NextPageToken
+		if destPageToken == "" {
+			break
+		}
+	}
+	return existingFilenames, nil
+}
+
 // The date is used as prefixFileName in format sidestream/yyyy/mm/dd
 func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFileName string) error {
 	unembargoService := CreateService()
@@ -76,26 +102,9 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 	}
 
 	// Build list of exisitng files in destination bucket.
-	existingFilenames := make(map[string]bool)
-	destPageToken := ""
-	for {
-		destinationFiles := unembargoService.Objects.List(destBucket)
-		if destPageToken != "" {
-			destinationFiles.PageToken(destPageToken)
-		}
-		destinationFiles.Prefix(prefixFileName)
-		destinationFilesList, err := destinationFiles.Context(context.Background()).Do()
-		if err != nil {
-			log.Printf("Objects.List failed: %v\n", err)
-			return err
-		}
-		for _, oneItem := range destinationFilesList.Items {
-			existingFilenames[oneItem.Name] = true
-		}
-		destPageToken = destinationFilesList.NextPageToken
-		if destPageToken == "" {
-			break
-		}
+	existingFilenames, err := GetFileNamesWithPrefix(unembargoService, destBucket, prefixFileName)
+	if err != nil {
+		return err
 	}
 
 	// Copy files.
@@ -121,6 +130,7 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 					return fmt.Errorf("Objects deletion from public bucket failed.\n")
 				}
 			}
+
 			if fileContent, err := unembargoService.Objects.Get(sourceBucket, oneItem.Name).Download(); err == nil {
 				// Insert the object into destination bucket.
 				object := &storage.Object{Name: oneItem.Name}
@@ -147,6 +157,7 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 }
 
 // The input date is integer in format yyyymmdd
+// TODO: add validity check for input date.
 func Unembargo(date int) error {
 	f, err := os.OpenFile("UnembargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

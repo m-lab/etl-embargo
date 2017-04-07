@@ -132,10 +132,13 @@ func SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 // bucket directly when it becomes one year old.
 func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Service) error {
 	embargoBuf, publicBuf, err := SplitFile(content)
-	if err == nil && WriteResults(tarfileName, service, embargoBuf, publicBuf) == nil {
-		return nil
+	if err != nil {
+		return err
 	}
-	return err
+	if err = WriteResults(tarfileName, service, embargoBuf, publicBuf); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Embargo do embargo ckecking to all files in the sourceBucket.
@@ -152,7 +155,7 @@ func EmbargoOneDayData(date string) error {
 
 	log.SetOutput(f)
 
-	// TODO: Create service in a Singleton object, and reuses them for all GCS requests.
+	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
 	embargoService := CreateService()
 	if embargoService == nil {
 		log.Printf("Storage service was not initialized.\n")

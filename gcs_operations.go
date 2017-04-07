@@ -44,7 +44,7 @@ func CreateService() *storage.Service {
 	return service
 }
 
-// TODO: Create service in a Singleton object, and reuses them for all GCS requests.
+// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
 
 // Create a new bucket. Return true if it already exsits or is created successfully.
 func CreateBucket(projectID string, bucketName string) bool {

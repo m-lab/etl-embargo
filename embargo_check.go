@@ -49,7 +49,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 
 // ReadWhitelistFromGCS load IP whitelist from cloud storage.
 func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
-	// TODO: Create service in a Singleton object, and reuses them for all GCS requests.
+	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
 	checkService := CreateService()
 	if checkService == nil {
 		log.Printf("Storage service was not initialized.\n")

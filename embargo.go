@@ -76,6 +76,9 @@ func SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 			log.Printf("can not read the header file correctly: %v\n", err)
 			return embargoBuf, publicBuf, err
 		}
+		if header.Typeflag != tar.TypeReg {
+			continue
+		}
 		basename := filepath.Base(header.Name)
 		info := header.FileInfo()
 		hdr := new(tar.Header)

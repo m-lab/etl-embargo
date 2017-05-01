@@ -58,9 +58,8 @@ var (
 // Given the current date, return true if the date is more than oneyear ago.
 // The input date is integer in format yyyymmdd
 func CheckWhetherUnembargo(date int) bool {
-	current_time := time.Now().UTC().Format("2006-01-02")
-	current_year, _ := strconv.Atoi(current_time[0:4])
-	cutoff_date, _ := strconv.Atoi(strconv.Itoa(int(current_year-1)) + current_time[5:7] + current_time[8:10])
+	current_time := time.Now()
+	cutoff_date := (int(current_time.Year()) -1) * 10000 + int(current_time.Month()) * 100 + int(current_time.Day())
 	if date < cutoff_date {
 		return true
 	}

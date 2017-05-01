@@ -1,2 +1,7 @@
 runtime: go
-env: flex
+api_version: go1
+service: embargo
+
+handlers:
+- url: /.*
+  script: _go_app

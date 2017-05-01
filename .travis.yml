@@ -9,8 +9,13 @@ script:
 - go test -v -run Read
 - go test -v -run Should
 <<<<<<< HEAD
+<<<<<<< HEAD
 - go test -v -run Split
 
 =======
 - go test -v -run Cal
 >>>>>>> efbaa4e... Update .travis.yml
+=======
+- go test -v -run Split
+- go test -v -run Cal
+>>>>>>> 21efc046cc4046405b3cf72b29345f27efcd3abb

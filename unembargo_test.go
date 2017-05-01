@@ -15,7 +15,6 @@ package embargo
 
 import (
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 )
@@ -28,25 +27,21 @@ func TestUnembargoLegacy(t *testing.T) {
 	DeleteFiles(privateBucket, "")
 	UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")
 	DeleteFiles(publicBucket, "")
-	if Unembargo(20160102) == nil {
-		// Check the privateBucket does not have that file any more
-		fileNames := GetFileNamesFromBucket(privateBucket)
-		for _, fileName := range fileNames {
-			if strings.Contains(fileName, "20160102T000000Z-mlab3-sin01-sidestream-0000.tgz") {
-				t.Errorf("The embargoed copy should be deleted after the process.\n")
-			}
-		}
-		// Check the publicBucket has that file
-		fileNames2 := GetFileNamesFromBucket(publicBucket)
-		for _, fileName2 := range fileNames2 {
-			if strings.Contains(fileName2, "20160102T000000Z-mlab3-sin01-sidestream-0000.tgz") {
-				return
-			}
-		}
-		t.Errorf("The public bucket does not have the new copy.\n")
-	} else {
+	if Unembargo(20160102) != nil {
 		t.Errorf("Unembargo func did not return true.")
+		return
 	}
+	// Check the privateBucket does not have that file any more
+	privateNames := GetFileNamesFromBucket(privateBucket)
+	if len(privateNames) != 0 {
+		t.Errorf("The embargoed copy should be deleted after the process.\n")
+	}
+	// Check the publicBucket has that file
+	publicNames := GetFileNamesFromBucket(publicBucket)
+	if len(publicNames) != 1 || publicNames[0] != "sidestream/2016/01/02/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz" {
+		t.Errorf("The public bucket does not have the new copy.\n")
+	}
+
 }
 
 func TestCalculateDate(t *testing.T) {

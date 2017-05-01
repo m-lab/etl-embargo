@@ -59,7 +59,7 @@ var (
 // The input date is integer in format yyyymmdd
 func CheckWhetherUnembargo(date int) bool {
 	current_time := time.Now()
-	cutoff_date := (int(current_time.Year()) -1) * 10000 + int(current_time.Month()) * 100 + int(current_time.Day())
+	cutoff_date := (int(current_time.Year())-1)*10000 + int(current_time.Month())*100 + int(current_time.Day())
 	if date < cutoff_date {
 		return true
 	}
@@ -69,26 +69,19 @@ func CheckWhetherUnembargo(date int) bool {
 // Get filenames for given bucket with the given prefix. Use the service
 func GetFileNamesWithPrefix(service *storage.Service, bucketName string, prefixFileName string) (map[string]bool, error) {
 	existingFilenames := make(map[string]bool)
-	destPageToken := ""
-	for {
-		destinationFiles := service.Objects.List(bucketName)
-		if destPageToken != "" {
-			destinationFiles.PageToken(destPageToken)
-		}
-		destinationFiles.Prefix(prefixFileName)
-		destinationFilesList, err := destinationFiles.Context(context.Background()).Do()
-		if err != nil {
-			log.Printf("Objects.List failed: %v\n", err)
-			return existingFilenames, err
-		}
-		for _, oneItem := range destinationFilesList.Items {
-			existingFilenames[oneItem.Name] = true
-		}
-		destPageToken = destinationFilesList.NextPageToken
-		if destPageToken == "" {
-			break
-		}
+
+	destinationFiles := service.Objects.List(bucketName)
+
+	destinationFiles.Prefix(prefixFileName)
+	destinationFilesList, err := destinationFiles.Context(context.Background()).Do()
+	if err != nil {
+		log.Printf("Objects.List failed: %v\n", err)
+		return existingFilenames, err
 	}
+	for _, oneItem := range destinationFilesList.Items {
+		existingFilenames[oneItem.Name] = true
+	}
+
 	return existingFilenames, nil
 }
 
@@ -129,7 +122,7 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 					return fmt.Errorf("Objects deletion from public bucket failed.\n")
 				}
 			}
-
+			// TODO: use Copy() instead of Download() + Insert()
 			if fileContent, err := unembargoService.Objects.Get(sourceBucket, oneItem.Name).Download(); err == nil {
 				// Insert the object into destination bucket.
 				object := &storage.Object{Name: oneItem.Name}

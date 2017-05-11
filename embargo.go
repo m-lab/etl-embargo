@@ -9,12 +9,12 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-        "net/http"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-       // "google.golang.org/appengine"
+	// "google.golang.org/appengine"
 	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
 )
@@ -197,7 +197,7 @@ func EmbargoOneDayData(date string) error {
 
 // Toy code for verifying the app engine did their job.
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
-        if r.URL.Path != "/" {
+	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
@@ -216,7 +216,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", EmbargoHandler)
-        http.HandleFunc("/_ah/health", healthCheckHandler)
-        log.Print("Listening on port 8080")
+	http.HandleFunc("/_ah/health", healthCheckHandler)
+	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

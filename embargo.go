@@ -195,6 +195,7 @@ func EmbargoOneDayData(date string) error {
 	return nil
 }
 
+// Toy code for verifying the app engine did their job.
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -206,8 +207,6 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	destPublicBucket = "embargo-output"
 	destPrivateBucket = "mlab-embargoed-data"
 	log.Print("Doing embargo on new coming data.\n")
-	//DeleteFiles(sourceBucket, "")
-	//UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
 	EmbargoOneDayData("2017/03/14")
 }
 

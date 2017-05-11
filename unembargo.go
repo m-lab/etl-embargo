@@ -41,6 +41,7 @@ package embargo
 // 2. Copy the private files directlyif there is no existing public files with the same name.
 
 import (
+        "errors"
 	"fmt"
 	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
@@ -100,48 +101,39 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 	}
 
 	// Copy files.
-	pageToken := ""
-	for {
-		// Get list all objects in source bucket.
-		sourceFiles := unembargoService.Objects.List(sourceBucket)
-		sourceFiles.Prefix(prefixFileName)
-		if pageToken != "" {
-			sourceFiles.PageToken(pageToken)
-		}
-		sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
-		if err != nil {
-			log.Printf("Objects List of source bucket failed: %v\n", err)
-			return err
-		}
-		for _, oneItem := range sourceFilesList.Items {
-			if existingFilenames[oneItem.Name] {
-				// Delete the exisitng file in destBucket.
-				result := unembargoService.Objects.Delete(destBucket, oneItem.Name).Do()
-				if result != nil {
-					log.Printf("Objects deletion from public bucket failed.\n")
-					return fmt.Errorf("Objects deletion from public bucket failed.\n")
-				}
-			}
-			// TODO: use Copy() instead of Download() + Insert()
-			if fileContent, err := unembargoService.Objects.Get(sourceBucket, oneItem.Name).Download(); err == nil {
-				// Insert the object into destination bucket.
-				object := &storage.Object{Name: oneItem.Name}
-				_, err := unembargoService.Objects.Insert(destBucket, object).Media(fileContent.Body).Do()
-				if err != nil {
-					log.Printf("Objects insert failed: %v\n", err)
-					return err
-				}
-			}
-			// Delete the file in private bucket
-			result := unembargoService.Objects.Delete(sourceBucket, oneItem.Name).Do()
+
+	// Get list all objects in source bucket.
+	sourceFiles := unembargoService.Objects.List(sourceBucket)
+	sourceFiles.Prefix(prefixFileName)
+	sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
+	if err != nil {
+		log.Printf("Objects List of source bucket failed: %v\n", err)
+		return err
+	}
+	for _, oneItem := range sourceFilesList.Items {
+		if existingFilenames[oneItem.Name] {
+			// Delete the exisitng file in destBucket.
+			result := unembargoService.Objects.Delete(destBucket, oneItem.Name).Do()
 			if result != nil {
-				log.Printf("Objects deletion from private bucket failed.\n")
-				return fmt.Errorf("Objects deletion from private bucket failed.\n")
+				log.Printf("Objects deletion from public bucket failed.\n")
+				return fmt.Errorf("Objects deletion from public bucket failed.\n")
 			}
 		}
-		pageToken = sourceFilesList.NextPageToken
-		if pageToken == "" {
-			break
+		// TODO: use Copy() instead of Download() + Insert()
+		if fileContent, err := unembargoService.Objects.Get(sourceBucket, oneItem.Name).Download(); err == nil {
+			// Insert the object into destination bucket.
+			object := &storage.Object{Name: oneItem.Name}
+			_, err := unembargoService.Objects.Insert(destBucket, object).Media(fileContent.Body).Do()
+			if err != nil {
+				log.Printf("Objects insert failed: %v\n", err)
+				return err
+			}
+		}
+		// Delete the file in private bucket
+		result := unembargoService.Objects.Delete(sourceBucket, oneItem.Name).Do()
+		if result != nil {
+			log.Printf("Objects deletion from private bucket failed.\n")
+			return fmt.Errorf("Objects deletion from private bucket failed.\n")
 		}
 	}
 
@@ -149,8 +141,11 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 }
 
 // The input date is integer in format yyyymmdd
-// TODO: add validity check for input date.
+// TODO(dev): add more validity check for input date.
 func Unembargo(date int) error {
+	if date <= 20160000 || date > 21000000 {
+		return errors.New("The date is out of range.")
+	}
 	f, err := os.OpenFile("UnembargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)

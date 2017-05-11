@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 // Implement whitelist loading and embargo check based on filename.
-package embargo
+package main
 
 import (
 	"bufio"

@@ -13,7 +13,7 @@ limitations under the License.
 
 // Parse filename and return componants like log-time, IP, etc.
 // Filename example: 20170315T01:00:00Z_173.205.3.39_0.web100
-package embargo
+package main
 
 import (
 	"strings"

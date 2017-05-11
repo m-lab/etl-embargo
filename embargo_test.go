@@ -1,4 +1,4 @@
-package embargo
+package main
 
 import (
 	"bytes"

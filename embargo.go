@@ -1,5 +1,5 @@
 // Embargo implementation.
-package embargo
+package main
 
 import (
 	"archive/tar"
@@ -9,10 +9,12 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+        "net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
+       // "google.golang.org/appengine"
 	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
 )
@@ -191,4 +193,31 @@ func EmbargoOneDayData(date string) error {
 		}
 	}
 	return nil
+}
+
+func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
+        if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	fmt.Fprint(w, "Doing embargo!\n")
+
+	sourceBucket = "sidestream-embargo"
+	destPublicBucket = "embargo-output"
+	destPrivateBucket = "mlab-embargoed-data"
+	log.Print("Doing embargo on new coming data.\n")
+	//DeleteFiles(sourceBucket, "")
+	//UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
+	EmbargoOneDayData("2017/03/14")
+}
+
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "ok")
+}
+
+func main() {
+	http.HandleFunc("/", EmbargoHandler)
+        http.HandleFunc("/_ah/health", healthCheckHandler)
+        log.Print("Listening on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

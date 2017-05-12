@@ -21,13 +21,15 @@ import (
 
 // This end to end test require anthentication.
 func TestUnembargoLegacy(t *testing.T) {
-	privateBucket = "mlab-embargoed-data-test"
-	publicBucket = "mlab-bigstore-data-test"
+	privateBucket := "mlab-embargoed-data-test"
+	publicBucket := "mlab-bigstore-data-test"
+	var testConfig config
+	testConfig.NewConfig(privateBucket, publicBucket)
 	// Prepare the buckets for input & output.
 	DeleteFiles(privateBucket, "")
 	UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")
 	DeleteFiles(publicBucket, "")
-	if Unembargo(20160102) != nil {
+	if testConfig.Unembargo(20160102) != nil {
 		t.Errorf("Unembargo func did not return true.")
 		return
 	}

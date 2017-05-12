@@ -51,10 +51,15 @@ import (
 	"time"
 )
 
-var (
-	privateBucket = ""
-	publicBucket  = ""
-)
+type config struct {
+	privateBucket string
+	publicBucket  string
+}
+
+func (nc *config) NewConfig(privateBucketName, publicBucketName string) {
+	nc.privateBucket = privateBucketName
+	nc.publicBucket = publicBucketName
+}
 
 // Given the current date, return true if the date is more than oneyear ago.
 // The input date is integer in format yyyymmdd
@@ -154,7 +159,7 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 
 // The input date is integer in format yyyymmdd
 // TODO(dev): add more validity check for input date.
-func Unembargo(date int) error {
+func (nc *config) Unembargo(date int) error {
 	if date <= 20160000 || date > 21000000 {
 		return errors.New("The date is out of range.")
 	}
@@ -168,9 +173,9 @@ func Unembargo(date int) error {
 	log.SetOutput(f)
 
 	if CheckWhetherUnembargo(date) {
-		date_str := strconv.Itoa(date)
-		input_dir := "sidestream/" + date_str[0:4] + "/" + date_str[4:6] + "/" + date_str[6:8]
-		return UnEmbargoOneDayLegacyFiles(privateBucket, publicBucket, input_dir)
+		dateStr := strconv.Itoa(date)
+		inputDir := "sidestream/" + dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
+		return UnEmbargoOneDayLegacyFiles(nc.privateBucket, nc.publicBucket, inputDir)
 	}
 	return fmt.Errorf("Date is too new, not qualified for unembargo.")
 }

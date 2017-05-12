@@ -25,22 +25,22 @@ import (
 func TestUnembargoLegacy(t *testing.T) {
 	privateBucket := "mlab-embargoed-data-test"
 	publicBucket := "mlab-bigstore-data-test"
-	testConfig := NewConfig(privateBucket, publicBucket)
+	testConfig := embargo.NewConfig(privateBucket, publicBucket)
 	// Prepare the buckets for input & output.
-	DeleteFiles(privateBucket, "")
-	UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")
-	DeleteFiles(publicBucket, "")
+	embargo.DeleteFiles(privateBucket, "")
+	embargo.UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")
+	embargo.DeleteFiles(publicBucket, "")
 	if (*testConfig).Unembargo(20160102) != nil {
 		t.Errorf("Unembargo func did not return true.")
 		return
 	}
 	// Check the privateBucket does not have that file any more
-	privateNames := GetFileNamesFromBucket(privateBucket)
+	privateNames := embargo.GetFileNamesFromBucket(privateBucket)
 	if len(privateNames) != 0 {
 		t.Errorf("The embargoed copy should be deleted after the process.\n")
 	}
 	// Check the publicBucket has that file
-	publicNames := GetFileNamesFromBucket(publicBucket)
+	publicNames := embargo.GetFileNamesFromBucket(publicBucket)
 	if len(publicNames) != 1 || publicNames[0] != "sidestream/2016/01/02/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz" {
 		t.Errorf("The public bucket does not have the new copy.\n")
 	}
@@ -49,10 +49,10 @@ func TestUnembargoLegacy(t *testing.T) {
 
 func TestCalculateDate(t *testing.T) {
 	currentTime, _ := strconv.Atoi(time.Now().UTC().Format("20061229"))
-	if CheckWhetherUnembargo(currentTime) {
+	if embargo.CheckWhetherUnembargo(currentTime) {
 		t.Error("The current date should return false for unembargo check.")
 	}
-	if !CheckWhetherUnembargo(20060129) {
+	if !embargo.CheckWhetherUnembargo(20060129) {
 		t.Error("This last year date should return true for unembargo check.")
 	}
 }

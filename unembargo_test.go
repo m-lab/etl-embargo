@@ -45,8 +45,8 @@ func TestUnembargoLegacy(t *testing.T) {
 }
 
 func TestCalculateDate(t *testing.T) {
-	current_time, _ := strconv.Atoi(time.Now().UTC().Format("20061229"))
-	if CheckWhetherUnembargo(current_time) {
+	currentTime, _ := strconv.Atoi(time.Now().UTC().Format("20061229"))
+	if CheckWhetherUnembargo(currentTime) {
 		t.Error("The current date should return false for unembargo check.")
 	}
 	if !CheckWhetherUnembargo(20060129) {

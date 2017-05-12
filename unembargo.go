@@ -44,11 +44,13 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/net/context"
-	storage "google.golang.org/api/storage/v1"
+	storage_v1 "google.golang.org/api/storage/v1"
 	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"cloud.google.com/go/storage"
 )
 
 type config struct {
@@ -73,7 +75,7 @@ func CheckWhetherUnembargo(date int) bool {
 }
 
 // Get filenames for given bucket with the given prefix. Use the service
-func GetFileNamesWithPrefix(service *storage.Service, bucketName string, prefixFileName string) (map[string]bool, error) {
+func GetFileNamesWithPrefix(service *storage_v1.Service, bucketName string, prefixFileName string) (map[string]bool, error) {
 	existingFilenames := make(map[string]bool)
 	pageToken := ""
 	for {
@@ -104,6 +106,10 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 		log.Printf("Storage service was not initialized.\n")
 		return fmt.Errorf("Storage service was not initialized.\n")
 	}
+	client, err := storage.NewClient(context.Background())
+	if err != nil {
+		return err
+	}
 
 	// Build list of exisitng files in destination bucket.
 	existingFilenames, err := GetFileNamesWithPrefix(unembargoService, destBucket, prefixFileName)
@@ -132,15 +138,12 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 					return fmt.Errorf("Objects deletion from public bucket failed.\n")
 				}
 			}
-			// TODO: use Copy() instead of Download() + Insert()
-			if fileContent, err := unembargoService.Objects.Get(sourceBucket, oneItem.Name).Download(); err == nil {
-				// Insert the object into destination bucket.
-				object := &storage.Object{Name: oneItem.Name}
-				_, err := unembargoService.Objects.Insert(destBucket, object).Media(fileContent.Body).Do()
-				if err != nil {
-					log.Printf("Objects insert failed: %v\n", err)
-					return err
-				}
+			// Copy the file to dest bucket.
+			// CopierFrom() is only available in newer "cloud.google.com/go/storage" libraty
+			src := client.Bucket(sourceBucket).Object(oneItem.Name)
+			dst := client.Bucket(destBucket).Object(oneItem.Name)
+			if _, err := dst.CopierFrom(src).Run(context.Background()); err != nil {
+				return fmt.Errorf("Objects copy failed: %v\n", err)
 			}
 			// Delete the file in private bucket
 			result := unembargoService.Objects.Delete(sourceBucket, oneItem.Name).Do()

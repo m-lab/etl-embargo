@@ -58,16 +58,18 @@ type config struct {
 	publicBucket  string
 }
 
-func (nc *config) NewConfig(privateBucketName, publicBucketName string) {
+func NewConfig(privateBucketName, publicBucketName string) *config {
+	var nc config
 	nc.privateBucket = privateBucketName
 	nc.publicBucket = publicBucketName
+	return &nc
 }
 
 // Given the current date, return true if the date is more than oneyear ago.
 // The input date is integer in format yyyymmdd
 func CheckWhetherUnembargo(date int) bool {
 	currentTime := time.Now()
-	cutoffDate := (int(currentTime.Year())-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
+	cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
 	if date < cutoffDate {
 		return true
 	}

@@ -195,19 +195,29 @@ func EmbargoOneDayData(date string) error {
 	return nil
 }
 
-// Toy code for verifying the app engine did their job.
+// The input URL path is like: "/submit?date=yyyymmdd&file=...."
+// The return string is like "yyyy/mm/dd" if there is a date, or empty string
+func ParseURL(path string) string {
+	pos := strings.Index(path, "date=")
+	if pos >= 0 && len(path) >= pos+13 {
+		dateStr := path[pos+5 : pos+13]
+		return dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
+	}
+	return ""
+}
+
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+	date := ParseURL(r.URL.Path)
+	if date == "" {
 		http.NotFound(w, r)
 		return
 	}
-	fmt.Fprint(w, "Doing embargo!\n")
 
 	sourceBucket = "sidestream-embargo"
 	destPublicBucket = "embargo-output"
 	destPrivateBucket = "mlab-embargoed-data"
-	log.Print("Doing embargo on new coming data.\n")
-	EmbargoOneDayData("2017/03/14")
+	fmt.Fprint(w, "Doing embargo on new coming data for date: %s.\n", date)
+	EmbargoOneDayData(date)
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -215,7 +225,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", EmbargoHandler)
+	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

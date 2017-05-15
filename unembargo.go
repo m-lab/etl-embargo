@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 // Implement the umembargo process when the previously embargoed files are more than one year old.
-package embargo
+package main
 
 // For example, the legacy pipeline stop running from 2017-05-01
 // There are three kinds of files which require umembargo operations:

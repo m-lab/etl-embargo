@@ -63,3 +63,12 @@ func TestSplitTarFile(t *testing.T) {
 		t.Error("Private data not correct.\n")
 	}
 }
+
+func TestParseURL(t *testing.T) {
+	if ParseURL("/submit?date=12345678") != "1234/56/78" {
+		t.Error("Do not parse date from URL correctly.\n")
+	}
+	if ParseURL("/submit?file=abc") != "" {
+		t.Error("Do not parse date from URL correctly.\n")
+	}
+}

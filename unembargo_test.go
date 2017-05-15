@@ -11,36 +11,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package embargo_test
+package main
 
 import (
 	"strconv"
 	"testing"
 	"time"
-
-	"github.com/m-lab/etl-embargo"
+	//"github.com/m-lab/etl-embargo"
 )
 
 // This end to end test require anthentication.
 func TestUnembargoLegacy(t *testing.T) {
 	privateBucket := "mlab-embargoed-data-test"
 	publicBucket := "mlab-bigstore-data-test"
-	testConfig := embargo.NewConfig(privateBucket, publicBucket)
+	testConfig := NewConfig(privateBucket, publicBucket)
 	// Prepare the buckets for input & output.
-	embargo.DeleteFiles(privateBucket, "")
-	embargo.UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")
-	embargo.DeleteFiles(publicBucket, "")
+	DeleteFiles(privateBucket, "")
+	UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")
+	DeleteFiles(publicBucket, "")
 	if testConfig.Unembargo(20160102) != nil {
 		t.Errorf("Unembargo func did not return true.")
 		return
 	}
 	// Check the privateBucket does not have that file any more
-	privateNames := embargo.GetFileNamesFromBucket(privateBucket)
+	privateNames := GetFileNamesFromBucket(privateBucket)
 	if len(privateNames) != 0 {
 		t.Errorf("The embargoed copy should be deleted after the process.\n")
 	}
 	// Check the publicBucket has that file
-	publicNames := embargo.GetFileNamesFromBucket(publicBucket)
+	publicNames := GetFileNamesFromBucket(publicBucket)
 	if len(publicNames) != 1 || publicNames[0] != "sidestream/2016/01/02/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz" {
 		t.Errorf("The public bucket does not have the new copy.\n")
 	}
@@ -49,10 +48,10 @@ func TestUnembargoLegacy(t *testing.T) {
 
 func TestCalculateDate(t *testing.T) {
 	currentTime, _ := strconv.Atoi(time.Now().UTC().Format("20061229"))
-	if embargo.CheckWhetherUnembargo(currentTime) {
+	if CheckWhetherUnembargo(currentTime) {
 		t.Error("The current date should return false for unembargo check.")
 	}
-	if !embargo.CheckWhetherUnembargo(20060129) {
+	if !CheckWhetherUnembargo(20060129) {
 		t.Error("This last year date should return true for unembargo check.")
 	}
 }

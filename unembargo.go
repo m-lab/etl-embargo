@@ -59,10 +59,11 @@ type config struct {
 }
 
 func NewConfig(privateBucketName, publicBucketName string) *config {
-	var nc config
-	nc.privateBucket = privateBucketName
-	nc.publicBucket = publicBucketName
-	return &nc
+	nc := &config{
+		privateBucket: privateBucketName,
+		publicBucket:  publicBucketName,
+	}
+	return nc
 }
 
 // Given the current date, return true if the date is more than oneyear ago.

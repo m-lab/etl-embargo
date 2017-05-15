@@ -30,7 +30,7 @@ func TestUnembargoLegacy(t *testing.T) {
 	embargo.DeleteFiles(privateBucket, "")
 	embargo.UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")
 	embargo.DeleteFiles(publicBucket, "")
-	if (*testConfig).Unembargo(20160102) != nil {
+	if testConfig.Unembargo(20160102) != nil {
 		t.Errorf("Unembargo func did not return true.")
 		return
 	}

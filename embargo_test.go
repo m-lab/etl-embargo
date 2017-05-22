@@ -1,25 +1,25 @@
-package main
+package embargo_test
 
 import (
 	"bytes"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/m-lab/etl-embargo"
 )
 
 // End to end test, requires authentication.
 // TODO: Enable it on Travis.
 func TestEmbargo(t *testing.T) {
-	embargoDate = 20160315
-	sourceBucket = "sidestream-embargo"
-	destPublicBucket = "embargo-output"
-	destPrivateBucket = "mlab-embargoed-data"
-	DeleteFiles(sourceBucket, "")
-	UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
-	if EmbargoOneDayData("2017/03/15") != nil {
+        sourceBucket := "sidestream-embargo"
+        testConfig := embargo.NewEmbargoConfig(sourceBucket, "mlab-embargoed-data", "embargo-output", "")
+	embargo.DeleteFiles(sourceBucket, "")
+	embargo.UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
+	if testConfig.EmbargoOneDayData("2017/03/15") != nil {
 		t.Error("Did not perform embargo correctly.\n")
 	}
-	DeleteFiles(sourceBucket, "")
+	embargo.DeleteFiles(sourceBucket, "")
 	return
 }
 
@@ -30,8 +30,8 @@ func TestEmbargo(t *testing.T) {
 // with lists of inner files, call SplitFile on it, then verify that the pub
 // and private buffers contain the correct filenames.
 func TestSplitTarFile(t *testing.T) {
-	embargoCheck.ReadWhitelistFromLocal("testdata/whitelist_full")
-	embargoCheck.Embargodate = 20160315
+        testConfig := embargo.NewEmbargoConfig("sidestream-embargo", "mlab-embargoed-data", "embargo-output", "testdata/whitelist_full")
+
 	// Load input tar file.
 	file, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz")
 	if err != nil {
@@ -39,7 +39,7 @@ func TestSplitTarFile(t *testing.T) {
 	}
 	defer file.Close()
 
-	privateBuf, publicBuf, err := SplitFile(file)
+	privateBuf, publicBuf, err := testConfig.SplitFile(file)
 	if err != nil {
 		t.Error("Did not perform embargo ocrrectly.\n")
 	}
@@ -61,14 +61,5 @@ func TestSplitTarFile(t *testing.T) {
 	privateContent, _ := ioutil.ReadAll(privateGolden)
 	if !bytes.Equal(privateBuf.Bytes(), privateContent) {
 		t.Error("Private data not correct.\n")
-	}
-}
-
-func TestParseURL(t *testing.T) {
-	if ParseURL("/submit?date=12345678") != "1234/56/78" {
-		t.Error("Do not parse date from URL correctly.\n")
-	}
-	if ParseURL("/submit?file=abc") != "" {
-		t.Error("Do not parse date from URL correctly.\n")
 	}
 }

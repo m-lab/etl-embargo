@@ -1,12 +1,11 @@
 package main
 
 import (
-        "fmt"
-        "log"
-  	"net/http"
-        "github.com/m-lab/etl-embargo"
+	"fmt"
+	"github.com/m-lab/etl-embargo"
+	"log"
+	"net/http"
 )
-
 
 // For now, we can handle data for one day or a single file.
 // The input URL is like: "hostname:port/submit?date=yyyymmdd&file=sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz"
@@ -19,7 +18,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-        testConfig := embargo.NewEmbargoConfig("scraper-mlab-staging", "mlab-embargoed-data", "embargo-output", "")
+	testConfig := embargo.NewEmbargoConfig("scraper-mlab-staging", "mlab-embargoed-data", "embargo-output", "")
 	if filename[0] != "" {
 		testConfig.EmbargoSingleFile(filename[0])
 		fmt.Fprint(w, "Done with embargo single file "+filename[0]+" \n")

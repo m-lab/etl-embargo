@@ -19,27 +19,28 @@ import (
 )
 
 type EmbargoConfig struct {
-	sourceBucket       string
-	destPrivateBucket  string
-        destPublicBucket   string
-        embargoCheck       EmbargoCheck
-        embargoService     *storage.Service
+	sourceBucket      string
+	destPrivateBucket string
+	destPublicBucket  string
+	embargoCheck      EmbargoCheck
+	embargoService    *storage.Service
 }
 
 func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) *EmbargoConfig {
 	nc := &EmbargoConfig{
-                sourceBucket:      sourceBucketName,
+		sourceBucket:      sourceBucketName,
 		destPrivateBucket: privateBucketName,
 		destPublicBucket:  publicBucketName,
 	}
-        if whitelistFile == "" {
-           nc.embargoCheck.ReadWhitelistFromGCS("whitelist")
-        } else {
-           nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
-        }
-        nc.embargoService = CreateService()
+	if whitelistFile == "" {
+		nc.embargoCheck.ReadWhitelistFromGCS("whitelist")
+	} else {
+		nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
+	}
+	nc.embargoService = CreateService()
 	return nc
 }
+
 // Write results to GCS.
 func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf bytes.Buffer) error {
 	embargoTarfileName := strings.Replace(tarfileName, ".tgz", "-e.tgz", -1)
@@ -175,7 +176,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
 	log.SetOutput(f)
 
 	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
-        
+
 	if ec.embargoService == nil {
 		log.Printf("Storage service was not initialized.\n")
 		return fmt.Errorf("Storage service was not initialized.\n")
@@ -207,7 +208,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
 }
 
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-        ec.embargoCheck.ReadWhitelistFromGCS("whitelist")
+	ec.embargoCheck.ReadWhitelistFromGCS("whitelist")
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {
 		return errors.New("Not a proper sidestream file.")
 	}

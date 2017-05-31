@@ -5,6 +5,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,25 +18,40 @@ import (
 	storage "google.golang.org/api/storage/v1"
 )
 
-var (
-	sourceBucket      = ""
-	destPrivateBucket = ""
-	destPublicBucket  = ""
-	embargoCheck      = new(EmbargoCheck)
-	embargoDate       = 0
-)
+type EmbargoConfig struct {
+	sourceBucket      string
+	destPrivateBucket string
+	destPublicBucket  string
+	embargoCheck      EmbargoCheck
+	embargoService    *storage.Service
+}
+
+func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) *EmbargoConfig {
+	nc := &EmbargoConfig{
+		sourceBucket:      sourceBucketName,
+		destPrivateBucket: privateBucketName,
+		destPublicBucket:  publicBucketName,
+	}
+	if whitelistFile == "" {
+		nc.embargoCheck.ReadWhitelistFromGCS("whitelist")
+	} else {
+		nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
+	}
+	nc.embargoService = CreateService()
+	return nc
+}
 
 // Write results to GCS.
-func WriteResults(tarfileName string, service *storage.Service, embargoBuf, publicBuf bytes.Buffer) error {
+func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf bytes.Buffer) error {
 	embargoTarfileName := strings.Replace(tarfileName, ".tgz", "-e.tgz", -1)
 	publicObject := &storage.Object{Name: tarfileName}
 	embargoObject := &storage.Object{Name: embargoTarfileName}
-	if _, err := service.Objects.Insert(destPublicBucket, publicObject).Media(&publicBuf).Do(); err != nil {
+	if _, err := ec.embargoService.Objects.Insert(ec.destPublicBucket, publicObject).Media(&publicBuf).Do(); err != nil {
 		log.Printf("Objects insert failed: %v\n", err)
 		return err
 	}
 
-	if _, err := service.Objects.Insert(destPrivateBucket, embargoObject).Media(&embargoBuf).Do(); err != nil {
+	if _, err := ec.embargoService.Objects.Insert(ec.destPrivateBucket, embargoObject).Media(&embargoBuf).Do(); err != nil {
 		log.Printf("Objects insert failed: %v\n", err)
 		return err
 	}
@@ -43,7 +59,7 @@ func WriteResults(tarfileName string, service *storage.Service, embargoBuf, publ
 }
 
 // Split one tar files into 2 buffers.
-func SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
+func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
@@ -87,7 +103,7 @@ func SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 		hdr.Mode = int64(info.Mode())
 		hdr.ModTime = info.ModTime()
 		output, err := ioutil.ReadAll(tarReader)
-		if embargoCheck.ShouldEmbargo(basename) {
+		if ec.embargoCheck.ShouldEmbargo(basename) {
 			// put this file to a private buffer
 			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
@@ -134,12 +150,12 @@ func SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
 // public bucket.
 // The private file will have a different name, so it can be copied to public
 // bucket directly when it becomes one year old.
-func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Service) error {
-	embargoBuf, publicBuf, err := SplitFile(content)
+func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) error {
+	embargoBuf, publicBuf, err := ec.SplitFile(content)
 	if err != nil {
 		return err
 	}
-	if err = WriteResults(tarfileName, service, embargoBuf, publicBuf); err != nil {
+	if err = ec.WriteResults(tarfileName, embargoBuf, publicBuf); err != nil {
 		return err
 	}
 	return nil
@@ -149,7 +165,7 @@ func EmbargoOneTar(content io.Reader, tarfileName string, service *storage.Servi
 // The input date is in format yyyy/mm/dd
 // TODO: handle midway crash. Since the source bucket is unchanged, if it failed
 // in the middle, we just rerun it for that specific day.
-func EmbargoOneDayData(date string) error {
+func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
 	f, err := os.OpenFile("EmbargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -160,15 +176,13 @@ func EmbargoOneDayData(date string) error {
 	log.SetOutput(f)
 
 	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
-	embargoService := CreateService()
-	if embargoService == nil {
+
+	if ec.embargoService == nil {
 		log.Printf("Storage service was not initialized.\n")
 		return fmt.Errorf("Storage service was not initialized.\n")
 	}
 
-	embargoCheck.ReadWhitelistFromGCS("whitelist")
-	embargoCheck.Embargodate = embargoDate
-	sourceFiles := embargoService.Objects.List(sourceBucket)
+	sourceFiles := ec.embargoService.Objects.List(ec.sourceBucket)
 	sourceFiles.Prefix("sidestream/" + date)
 	sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
 	if err != nil {
@@ -181,14 +195,31 @@ func EmbargoOneDayData(date string) error {
 			continue
 		}
 
-		fileContent, err := embargoService.Objects.Get(sourceBucket, oneItem.Name).Download()
+		fileContent, err := ec.embargoService.Objects.Get(ec.sourceBucket, oneItem.Name).Download()
 		if err != nil {
 			log.Printf("fail to read a tar file from the bucket: %v\n", err)
 			return err
 		}
-		if err := EmbargoOneTar(fileContent.Body, oneItem.Name, embargoService); err != nil {
+		if err := ec.EmbargoOneTar(fileContent.Body, oneItem.Name); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
+	ec.embargoCheck.ReadWhitelistFromGCS("whitelist")
+	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {
+		return errors.New("Not a proper sidestream file.")
+	}
+
+	fileContent, err := ec.embargoService.Objects.Get(ec.sourceBucket, filename).Download()
+	if err != nil {
+		log.Printf("fail to read a tar file from the bucket: %v\n", err)
+		return err
+	}
+	if err := ec.EmbargoOneTar(fileContent.Body, filename); err != nil {
+		return err
 	}
 	return nil
 }

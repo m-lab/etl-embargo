@@ -11,20 +11,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package embargo
+package embargo_test
 
 import (
 	"testing"
+
+	"github.com/m-lab/etl-embargo"
 )
 
 func TestGetLocalIP(t *testing.T) {
-	fn1 := FileName{name: "20170225T23:00:00Z_4.34.58.34_0.web100.gz"}
+	fn1 := embargo.FileName{Name: "20170225T23:00:00Z_4.34.58.34_0.web100.gz"}
 	if fn1.GetLocalIP() != "4.34.58.34" {
 		t.Errorf("Wrong!\n")
 		return
 	}
 
-	fn2 := FileName{name: "20170225T23:00:00Z_ALL0.web100.gz"}
+	fn2 := embargo.FileName{Name: "20170225T23:00:00Z_ALL0.web100.gz"}
 	if fn2.GetLocalIP() != "" {
 		t.Errorf("Wrong!\n")
 		return
@@ -32,7 +34,7 @@ func TestGetLocalIP(t *testing.T) {
 }
 
 func TestGetDate(t *testing.T) {
-	fn1 := FileName{name: "20170225T23:00:00Z_4.34.58.34_0.web100.gz"}
+	fn1 := embargo.FileName{Name: "20170225T23:00:00Z_4.34.58.34_0.web100.gz"}
 	if fn1.GetDate() != "20170225" {
 		t.Errorf("Wrong!\n")
 		return

@@ -23,8 +23,7 @@ import (
 )
 
 type EmbargoCheck struct {
-	Whitelist   map[string]bool
-	Embargodate int
+	Whitelist map[string]bool
 }
 
 // TODO: Read IP whitelist from Data Store.
@@ -96,10 +95,11 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
 		log.Println(err)
 		return true
 	}
-	if date < ec.Embargodate {
+	// CheckWhetherUnembargo(date) return true if this date is more than one year old.
+	if CheckWhetherUnembargo(date) {
 		return false
 	}
-	fn := FileName{name: fileName}
+	fn := FileName{Name: fileName}
 	localIP := fn.GetLocalIP()
 	if ec.Whitelist[localIP] {
 		return false

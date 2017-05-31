@@ -20,21 +20,21 @@ import (
 )
 
 type FileName struct {
-	name string
+	Name string
 }
 
 // GetLocalIP parse the filename and return IP. For old format, it will return empty string.
 func (f *FileName) GetLocalIP() string {
-	localIPStart := strings.IndexByte(f.name, '_')
-	localIPEnd := strings.LastIndexByte(f.name, '_')
+	localIPStart := strings.IndexByte(f.Name, '_')
+	localIPEnd := strings.LastIndexByte(f.Name, '_')
 	if localIPStart < 0 || localIPEnd < 0 || localIPStart >= localIPEnd {
 		return ""
 	}
-	return f.name[localIPStart+1 : localIPEnd]
+	return f.Name[localIPStart+1 : localIPEnd]
 }
 
 func (f *FileName) GetDate() string {
-	return f.name[0:8]
+	return f.Name[0:8]
 }
 
 type FileNameParser interface {

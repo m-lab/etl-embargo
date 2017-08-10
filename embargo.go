@@ -33,7 +33,7 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 		destPublicBucket:  publicBucketName,
 	}
 	if whitelistFile == "" {
-		nc.embargoCheck.ReadWhitelistFromGCS("whitelist")
+		nc.embargoCheck.ReadWhitelistFromGCS("whitelist_full")
 	} else {
 		nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
 	}

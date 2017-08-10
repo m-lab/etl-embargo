@@ -8,8 +8,8 @@ import (
 )
 
 // For now, we can handle data for one day or a single file.
+// The input URL is like: "hostname:port/submit?date=yyyymmdd&file=gs://m-lab-sandbox/sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz"
 // TODO(dev): make sure only authorized users can call this.
-// The input URL is like: "hostname:port/submit?date=yyyymmdd&file=sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz"
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query()["date"]
 	filename := r.URL.Query()["file"]

@@ -55,7 +55,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
 		return false
 	}
 	whiteList := make(map[string]bool)
-	if fileContent, err := checkService.Objects.Get("sidestream-embargo", path).Download(); err == nil {
+	if fileContent, err := checkService.Objects.Get("mlab-sidestream-embargoed", path).Download(); err == nil {
 		scanner := bufio.NewScanner(fileContent.Body)
 		for scanner.Scan() {
 			oneLine := strings.TrimSuffix(scanner.Text(), "\n")

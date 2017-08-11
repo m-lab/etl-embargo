@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/m-lab/etl-embargo"
+	"github.com/m-lab/etl/storage"
 	"log"
 	"net/http"
+	"strings"
 )
 
 // For now, we can handle data for one day or a single file.

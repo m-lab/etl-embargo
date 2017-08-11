@@ -15,13 +15,14 @@ import (
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query()["date"]
 	filename := r.URL.Query()["file"]
-	destBucket := r.URL.Query()["destinationBucket"]
+	publicBucket := r.URL.Query()["publicBucket"]
+	privateBucket := r.URL.Query()["privateBucket"]
 	if len(date) == 0 && len(filename) == 0 {
 		fmt.Fprint(w, "Missing date or filename there\n")
 		http.NotFound(w, r)
 		return
 	}
-	if len(destBucket) == 0 {
+	if len(publicBucket) == 0 || len(privateBucket) == 0 {
 		fmt.Fprint(w, "Missing destination bucket there\n")
 		http.NotFound(w, r)
 		return
@@ -38,12 +39,17 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	sourceBucket := removePrefix[0:bucketNameEnd]
 	filePath := removePrefix[bucketNameEnd+1:]
 
-	bucket, err := storage.GetFilename(destBucket[0])
+	destBucket, err := storage.GetFilename(publicBucket[0])
 	if err != nil {
-		log.Printf("Invalid bucket name: %s\n", bucket)
+		log.Printf("Invalid bucket name: %s\n", destBucket)
 		return
 	}
-	testConfig := embargo.NewEmbargoConfig(sourceBucket, "mlab-private-data", bucket, "")
+	embargoBucket, err := storage.GetFilename(privateBucket[0])
+	if err != nil {
+		log.Printf("Invalid bucket name: %s\n", embargoBucket)
+		return
+	}
+	testConfig := embargo.NewEmbargoConfig(sourceBucket, embargoBucket, destBucket, "")
 	if filename[0] != "" {
 		testConfig.EmbargoSingleFile(filePath)
 		fmt.Fprint(w, "Done with embargo single file "+fn+" \n")

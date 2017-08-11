@@ -22,7 +22,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(destBucket) == 0 {
-                fmt.Fprint(w, "Missing destination bucket there\n")
+		fmt.Fprint(w, "Missing destination bucket there\n")
 		http.NotFound(w, r)
 		return
 	}
@@ -39,7 +39,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	filePath := removePrefix[bucketNameEnd+1:]
 
 	bucket, err := storage.GetFilename(destBucket[0])
-        if err != nil {
+	if err != nil {
 		log.Printf("Invalid bucket name: %s\n", bucket)
 		return
 	}

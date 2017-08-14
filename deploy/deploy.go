@@ -11,7 +11,7 @@ import (
 
 // For now, we can handle data for one day or a single file.
 // TODO(dev): make sure only authorized users can call this.
-// The input URL is like: "hostname:port/submit?date=yyyymmdd&file=gs://m-lab-sandbox/sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz&&destinationBucket=mlab-public-output"
+// The input URL is like: "hostname:port/submit?date=yyyymmdd&file=gs://scraper-mlab-sandbox/sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz&&publicBucket=archive-mlab-sandbox&&privateBucket=embargo-mlab-sandbox"
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query()["date"]
 	filename := r.URL.Query()["file"]
@@ -39,18 +39,8 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	sourceBucket := removePrefix[0:bucketNameEnd]
 	filePath := removePrefix[bucketNameEnd+1:]
 
-	destBucket, err := storage.GetFilename(publicBucket[0])
-	if err != nil {
-		log.Printf("Invalid bucket name: %s\n", destBucket)
-		return
-	}
-	embargoBucket, err := storage.GetFilename(privateBucket[0])
-	if err != nil {
-		log.Printf("Invalid bucket name: %s\n", embargoBucket)
-		return
-	}
-	testConfig := embargo.NewEmbargoConfig(sourceBucket, embargoBucket, destBucket, "")
-	if filename[0] != "" {
+	testConfig := embargo.NewEmbargoConfig(sourceBucket, privateBucket[0], publicBucket[0], "")
+	if fn != "" {
 		testConfig.EmbargoSingleFile(filePath)
 		fmt.Fprint(w, "Done with embargo single file "+fn+" \n")
 		return

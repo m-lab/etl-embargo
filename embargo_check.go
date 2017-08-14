@@ -91,10 +91,6 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
 		return true
 	}
 
-	if err != nil {
-		log.Println(err)
-		return true
-	}
 	// CheckWhetherUnembargo(date) return true if this date is more than one year old.
 	if CheckWhetherUnembargo(date) {
 		return false

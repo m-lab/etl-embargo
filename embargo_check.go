@@ -47,7 +47,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 }
 
 // ReadWhitelistFromGCS load IP whitelist from cloud storage.
-func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
+func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
 	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
 	checkService := CreateService()
 	if checkService == nil {
@@ -55,7 +55,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(path string) bool {
 		return false
 	}
 	whiteList := make(map[string]bool)
-	if fileContent, err := checkService.Objects.Get("mlab-sidestream-embargoed", path).Download(); err == nil {
+	if fileContent, err := checkService.Objects.Get(bucket, path).Download(); err == nil {
 		scanner := bufio.NewScanner(fileContent.Body)
 		for scanner.Scan() {
 			oneLine := strings.TrimSuffix(scanner.Text(), "\n")

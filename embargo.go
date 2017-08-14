@@ -33,7 +33,12 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 		destPublicBucket:  publicBucketName,
 	}
 	if whitelistFile == "" {
-		nc.embargoCheck.ReadWhitelistFromGCS("whitelist_full")
+		results := nc.embargoCheck.ReadWhitelistFromGCS("mlab-sidestream-embargoed", "whitelist_full")
+		if !results {
+			log.Printf("Cannot load whitelist.\n")
+		} else {
+			log.Printf("Load whitelist from GCS.\n")
+		}
 	} else {
 		nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
 	}
@@ -208,7 +213,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
 }
 
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	ec.embargoCheck.ReadWhitelistFromGCS("whitelist")
+	ec.embargoCheck.ReadWhitelistFromGCS("mlab-sidestream-embargoed", "whitelist_full")
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {
 		return errors.New("Not a proper sidestream file.")
 	}

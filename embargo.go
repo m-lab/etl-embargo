@@ -109,6 +109,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 		hdr.Size = info.Size()
 		hdr.Mode = int64(info.Mode())
 		hdr.ModTime = info.ModTime()
+                hdr.Typeflag = tar.TypeReg
 		output, err := ioutil.ReadAll(tarReader)
 		if ec.embargoCheck.ShouldEmbargo(basename) {
 			// put this file to a private buffer

@@ -2,6 +2,7 @@ package embargo_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -21,6 +22,13 @@ func TestEmbargo(t *testing.T) {
 	}
 	embargo.DeleteFiles(sourceBucket, "")
 	return
+}
+
+func TestGetDayOfWeek(t *testing.T) {
+	dayOfWeek, err := embargo.GetDayOfWeek("sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz")
+	if err != nil || dayOfWeek != "Tuesday" {
+		t.Error("Did not get day of week correctly.\n")
+	}
 }
 
 // This test verifies that func embargoBuf() correctly splits the input tar

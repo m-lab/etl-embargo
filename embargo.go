@@ -17,7 +17,7 @@ import (
 	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
 
-        "github.com/m-lab/etl/metrics"
+	"github.com/m-lab/etl/metrics"
 )
 
 type EmbargoConfig struct {
@@ -165,14 +165,14 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) error {
 	embargoBuf, publicBuf, err := ec.SplitFile(content)
 	if err != nil {
-                metrics.EmbargoErrorCount.Inc()
+		metrics.EmbargoErrorCount.Inc()
 		return err
 	}
 	if err = ec.WriteResults(tarfileName, embargoBuf, publicBuf); err != nil {
-                metrics.EmbargoErrorCount.Inc()
+		metrics.EmbargoErrorCount.Inc()
 		return err
 	}
-        metrics.EmbargoSuccessCount.Inc()
+	metrics.EmbargoSuccessCount.Inc()
 	return nil
 }
 

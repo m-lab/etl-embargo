@@ -18,7 +18,7 @@ var (
 	// Provides metrics:
 	//   embargo_success_total
 	// Example usage:
-	//   metrics.EmbargoSuccess.Inc() / .Dec()
+	//   metrics.EmbargoSuccess.Inc()
 	EmbargoSuccess = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "embargo_success_total",
 		Help: "Number of files that was processed by embargo app engine successfully.",
@@ -30,7 +30,7 @@ var (
 	// Provides metrics:
 	//   embargo_error_total
 	// Example usage:
-	//   metrics.EmbargoError.Inc() / .Dec()
+	//   metrics.EmbargoError.Inc()
 	EmbargoError = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "embargo_error_total",
 		Help: "Number of files that was not processed by embargo app engine successfully.",

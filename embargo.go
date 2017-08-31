@@ -18,7 +18,7 @@ import (
 	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
 
-	"github.com/m-lab/etl/metrics"
+	"github.com/m-lab/etl-embargo/metrics"
 )
 
 type EmbargoConfig struct {
@@ -166,7 +166,7 @@ func GetDayOfWeek(filename string) (string, error) {
 		return "", errors.New("invalid filename.")
 	}
 	date := filename[11:21]
-        dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
+	dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
 	parsedDate, err := time.Parse("2006-01-02 15:04:05", dateStr)
 	if err != nil {
 		return "", err

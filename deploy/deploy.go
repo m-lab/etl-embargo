@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	// Enable exported debug vars.  See https://golang.org/pkg/expvar/
+	_ "expvar"
 	"strings"
 
-	"github.com/m-lab/etl-embargo"
+        "github.com/m-lab/etl-embargo"
+	"github.com/m-lab/etl-embargo/metrics"
 	"github.com/m-lab/etl/storage"
 )
 
@@ -59,6 +62,8 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	metrics.SetupPrometheus()
+
 	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
 	log.Print("Listening on port 8080")

@@ -1,3 +1,13 @@
 runtime: go
 env: flex
 service: embargo
+
+network:
+  instance_tag: embargo
+  name: default
+  # Forward port 9090 on the GCE instance address to the same port in the
+  # container address. Only forward TCP traffic.
+  # Note: the default AppEngine container port 8080 cannot be forwarded.
+  forwarded_ports:
+    - 9090/tcp
+

@@ -8,7 +8,7 @@ import (
 	_ "expvar"
 	"strings"
 
-        "github.com/m-lab/etl-embargo"
+	"github.com/m-lab/etl-embargo"
 	"github.com/m-lab/etl-embargo/metrics"
 	"github.com/m-lab/etl/storage"
 )

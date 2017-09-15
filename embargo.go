@@ -13,9 +13,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
+
+	"github.com/m-lab/etl-embargo/metrics"
 )
 
 type EmbargoConfig struct {
@@ -155,19 +158,43 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 	return embargoBuf, publicBuf, nil
 }
 
+// EmbargoOneTar process a filepath string like
+// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
+// return "Tuesday" for date "2017/05/16"
+func GetDayOfWeek(filename string) (string, error) {
+	if len(filename) < 21 {
+		return "", errors.New("invalid filename.")
+	}
+	date := filename[11:21]
+	dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
+	parsedDate, err := time.Parse("2006-01-02 15:04:05", dateStr)
+	if err != nil {
+		return "", err
+	}
+	return parsedDate.Weekday().String(), nil
+}
+
 // EmbargoOneTar processes one tar file, splits it to 2 files. The embargoed files
 // will be saved in a private bucket, and the unembargoed part will be save in a
 // public bucket.
 // The private file will have a different name, so it can be copied to public
 // bucket directly when it becomes one year old.
 func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) error {
+	dayOfWeek, err := GetDayOfWeek(tarfileName)
+	if err != nil {
+		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
+	}
 	embargoBuf, publicBuf, err := ec.SplitFile(content)
 	if err != nil {
+		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 		return err
 	}
 	if err = ec.WriteResults(tarfileName, embargoBuf, publicBuf); err != nil {
+		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 		return err
 	}
+
+	metrics.Metrics_embargoSuccessTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 	return nil
 }
 

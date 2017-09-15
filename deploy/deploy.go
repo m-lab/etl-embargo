@@ -2,11 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/m-lab/etl-embargo"
-	"github.com/m-lab/etl/storage"
 	"log"
 	"net/http"
+	// Enable exported debug vars.  See https://golang.org/pkg/expvar/
+	_ "expvar"
 	"strings"
+
+	"github.com/m-lab/etl-embargo"
+	"github.com/m-lab/etl-embargo/metrics"
+	"github.com/m-lab/etl/storage"
 )
 
 // For now, we can handle data for one day or a single file.
@@ -46,8 +50,11 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	testConfig.EmbargoOneDayData(date[0])
-	fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
+	// Process the date if there is not single file.
+	if len(date) > 0 {
+		testConfig.EmbargoOneDayData(date[0])
+		fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
+	}
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +64,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
+	metrics.SetupPrometheus()
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

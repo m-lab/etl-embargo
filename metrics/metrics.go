@@ -11,16 +11,16 @@ import (
 )
 
 var (
-
 	// Measures the number of files that was processed by embargo app engine successfully.
 	// Provides metrics:
 	//   embargo_success_total
 	// Example usage:
 	//   metrics.EmbargoSuccess.Inc()
-	EmbargoSuccess = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "embargo_success_total",
-		Help: "Number of files that was processed by embargo app engine successfully.",
-	},
+	Metrics_embargoSuccessTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "embargo_Success_Total",
+			Help: "Number of files that was processed by embargo app engine successfully.",
+		},
 		// "sidestream", "Monday"
 		[]string{"experiment", "day_of_week"})
 
@@ -29,10 +29,11 @@ var (
 	//   embargo_error_total
 	// Example usage:
 	//   metrics.EmbargoError.Inc()
-	EmbargoError = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "embargo_error_total",
-		Help: "Number of files that was not processed by embargo app engine successfully.",
-	},
+	Metrics_embargoErrorTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "embargo_Error_Total",
+			Help: "Number of files that was not processed by embargo app engine successfully.",
+		},
 		// "sidestream", "Monday"
 		[]string{"experiment", "day_of_week"})
 )
@@ -54,7 +55,8 @@ func SetupPrometheus() {
 
 	http.Handle("/metrics", promhttp.Handler())
 	// Register the metrics defined with Prometheus's default registry.
-	prometheus.MustRegister(EmbargoSuccess)
-	prometheus.MustRegister(EmbargoError)
+	prometheus.MustRegister(Metrics_embargoSuccessTotal)
+	prometheus.MustRegister(Metrics_embargoErrorTotal)
+
 	go http.ListenAndServe(":9090", mux)
 }

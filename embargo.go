@@ -182,19 +182,19 @@ func GetDayOfWeek(filename string) (string, error) {
 func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) error {
 	dayOfWeek, err := GetDayOfWeek(tarfileName)
 	if err != nil {
-		metrics.EmbargoError.WithLabelValues("sidestream", "Unknown").Inc()
+		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
 	}
 	embargoBuf, publicBuf, err := ec.SplitFile(content)
 	if err != nil {
-		metrics.EmbargoError.WithLabelValues("sidestream", dayOfWeek).Inc()
+		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 		return err
 	}
 	if err = ec.WriteResults(tarfileName, embargoBuf, publicBuf); err != nil {
-		metrics.EmbargoError.WithLabelValues("sidestream", dayOfWeek).Inc()
+		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 		return err
 	}
 
-	metrics.EmbargoSuccess.WithLabelValues("sidestream", dayOfWeek).Inc()
+	metrics.Metrics_embargoSuccessTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 	return nil
 }
 

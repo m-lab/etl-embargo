@@ -14,8 +14,9 @@ limitations under the License.
 package embargo_test
 
 import (
-	"github.com/m-lab/etl-embargo"
 	"testing"
+
+	embargo "github.com/m-lab/etl-embargo"
 )
 
 func TestReadWhitelistFromLocal(t *testing.T) {
@@ -48,20 +49,21 @@ func TestShouldEmbargo(t *testing.T) {
 	embargo_check := new(embargo.EmbargoCheck)
 	embargo_check.ReadWhitelistFromLocal("testdata/whitelist")
 	// After embargo date and IP not whitelisted. Return true, embargoed.
-	filename1 := "20170225T23:00:00Z_4.34.58.34_0.web100.gz"
+	// TODO: ShouldEmbargo should allow injecting a timestamp to check.
+	filename1 := "20180225T23:00:00Z_4.34.58.34_0.web100.gz"
 	if !embargo_check.ShouldEmbargo(filename1) {
-		t.Error("ShouldEmbargo(%s) = false, but file date is after embargo date and IP not whitelisted (%v).\n", filename1, embargo_check.Whitelist)
+		t.Errorf("ShouldEmbargo(%s) = false, but file date is after embargo date and IP not whitelisted (%v).\n", filename1, embargo_check.Whitelist)
 	}
 
 	// After embargo date and IP whitelisted. Return false, not embargoed.
 	filename2 := "20170225T23:00:00Z_213.244.128.170_0.web100.gz"
 	if embargo_check.ShouldEmbargo(filename2) {
-		t.Error("ShouldEmbargo(%s) = true, but after embargo date and IP whitelisted (%v).\n", filename2, embargo_check.Whitelist)
+		t.Errorf("ShouldEmbargo(%s) = true, but after embargo date and IP whitelisted (%v).\n", filename2, embargo_check.Whitelist)
 	}
 	// Before embargo date. Return false, not embargoed
 	filename3 := "20150225T23:00:00Z_213.244.128.1_0.web100.gz"
 	if embargo_check.ShouldEmbargo(filename3) {
-		t.Error("ShouldEmbargo(%s) = true, but before embargo date.\n", filename3)
+		t.Errorf("ShouldEmbargo(%s) = true, but before embargo date.\n", filename3)
 	}
 	return
 }

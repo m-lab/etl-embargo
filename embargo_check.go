@@ -82,7 +82,7 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
 		return false
 	}
 	if len(fileName) < 8 {
-		log.Println("Filename not with right length.\n")
+		log.Println("Filename not with right length.")
 		return true
 	}
 	date, err := strconv.Atoi(fileName[0:8])

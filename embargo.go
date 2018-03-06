@@ -140,19 +140,19 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 	}
 
 	if err := publicTw.Close(); err != nil {
-		log.Printf("cannot close tar writer", err)
+		log.Println("cannot close tar writer", err)
 		return embargoBuf, publicBuf, err
 	}
 	if err := embargoTw.Close(); err != nil {
-		log.Printf("cannot close tar writer", err)
+		log.Println("cannot close tar writer", err)
 		return embargoBuf, publicBuf, err
 	}
 	if err := publicGzw.Close(); err != nil {
-		log.Printf("cannot close tar writer", err)
+		log.Println("cannot close tar writer", err)
 		return embargoBuf, publicBuf, err
 	}
 	if err := embargoGzw.Close(); err != nil {
-		log.Printf("cannot close tar writer", err)
+		log.Println("cannot close tar writer", err)
 		return embargoBuf, publicBuf, err
 	}
 	return embargoBuf, publicBuf, nil

@@ -16,7 +16,7 @@ package embargo_test
 import (
 	"testing"
 
-	"github.com/m-lab/etl-embargo"
+	embargo "github.com/m-lab/etl-embargo"
 )
 
 func TestGetLocalIP(t *testing.T) {
@@ -28,6 +28,12 @@ func TestGetLocalIP(t *testing.T) {
 
 	fn2 := embargo.FileName{Name: "20170225T23:00:00Z_ALL0.web100.gz"}
 	if fn2.GetLocalIP() != "" {
+		t.Errorf("Wrong!\n")
+		return
+	}
+
+	fn3 := embargo.FileName{Name: "20170225T23:00:00Z_2001:4c08:2003:3f:::230_ALL0.web100.gz"}
+	if fn3.GetLocalIP() != "2001:4c08:2003:3f::230" {
 		t.Errorf("Wrong!\n")
 		return
 	}

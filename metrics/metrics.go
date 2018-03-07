@@ -36,6 +36,17 @@ var (
 		},
 		// "sidestream", "Monday"
 		[]string{"experiment", "day_of_week"})
+
+	// IPv6ErrorsTotal counts the kinds of errors encountered when normalizing IPv6 addresses.
+	//
+	// Example usage:
+	//     metrics.IPv6ErrorsTotal.WithLabelValues(err.Error()).Inc()
+	IPv6ErrorsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "embargo_ipv6_errors_total",
+			Help: "Number of failures normalizing IPv6 addresses.",
+		},
+		[]string{"error"})
 )
 
 func SetupPrometheus() {

@@ -17,6 +17,9 @@ package embargo
 
 import (
 	"strings"
+
+	"github.com/m-lab/etl-embargo/metrics"
+	"github.com/m-lab/etl/web100"
 )
 
 type FileName struct {
@@ -30,7 +33,12 @@ func (f *FileName) GetLocalIP() string {
 	if localIPStart < 0 || localIPEnd < 0 || localIPStart >= localIPEnd {
 		return ""
 	}
-	return f.Name[localIPStart+1 : localIPEnd]
+	ip, err := web100.NormalizeIPv6(f.Name[localIPStart+1 : localIPEnd])
+	if err != nil {
+		metrics.IPv6ErrorsTotal.WithLabelValues(err.Error()).Inc()
+		return ""
+	}
+	return ip
 }
 
 func (f *FileName) GetDate() string {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/m-lab/etl-embargo"
+	embargo "github.com/m-lab/etl-embargo"
 )
 
 // End to end test, requires authentication.

@@ -16,9 +16,9 @@ before_install:
 - $TRAVIS_BUILD_DIR/travis/install_gcloud.sh
 - source "${HOME}/google-cloud-sdk/path.bash.inc"
 
-- if [[ -n "$SERVICE_ACCOUNT_mlab_sandbox" ]] ; then
-  echo $SERVICE_ACCOUNT_mlab_sandbox | base64 -d > travis-testing.key ;
-  gcloud auth activate-service-account --key-file=travis-testing.key ;
+- if [[ -n "$SERVICE_ACCOUNT_mlab_testing" ]] ; then
+  echo "$SERVICE_ACCOUNT_mlab_testing" > $TRAVIS_BUILD_DIR/creds.json ;
+  export GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/creds.json ;
   fi
 
 # These directories will be cached on successful "script" builds, and restored,

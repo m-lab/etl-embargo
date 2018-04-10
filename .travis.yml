@@ -1,3 +1,5 @@
+# Travis configuration for etl-embargo.
+
 language: go
 
 go:
@@ -21,6 +23,12 @@ before_install:
   echo $SERVICE_ACCOUNT_mlab_testing | base64 -d > travis-testing.key ;
   gcloud auth activate-service-account --key-file=travis-testing.key ;
 
+# These directories will be cached on successful "script" builds, and restored,
+# if available, to save time on future builds.
+cache:
+  directories:
+    - "$HOME/google-cloud-sdk/"
+
 script:
 # TODO: set up test coverage
 - go test -v -run Get
@@ -28,3 +36,4 @@ script:
 - go test -v -run Should
 - go test -v -run Split
 - go test -v -run Cal
+

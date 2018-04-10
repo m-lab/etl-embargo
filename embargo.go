@@ -29,7 +29,7 @@ type EmbargoConfig struct {
 	embargoService    *storage.Service
 }
 
-var WhiteListBucket = "m-lab"
+var WhiteListBucket = "embargo-test"
 
 func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) *EmbargoConfig {
 	nc := &EmbargoConfig{
@@ -120,7 +120,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 				log.Printf("cannot write the embargoed header: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
-			//log.Printf("embargo file: %s\n", basename)
+			log.Printf("embargo file: %s\n", basename)
 			if _, err := embargoTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the embargoed content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err
@@ -131,7 +131,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 				log.Printf("cannot write the public header: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
-			//log.Printf("publish file: %s\n", basename)
+			log.Printf("publish file: %s\n", basename)
 			if _, err := publicTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the public content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err

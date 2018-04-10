@@ -48,6 +48,10 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 		nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
 	}
 	nc.embargoService = CreateService()
+
+        if nc.embargoService == nil {
+                log.Printf("Cannot create storage service.\n")
+        }
 	return nc
 }
 

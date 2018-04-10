@@ -18,7 +18,6 @@ import (
 	"bufio"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -81,20 +80,7 @@ func (ec *EmbargoCheck) ShouldEmbargo(fileName string) bool {
 	if !strings.Contains(fileName, "web100") {
 		return false
 	}
-	if len(fileName) < 8 {
-		log.Println("Filename not with right length.")
-		return true
-	}
-	date, err := strconv.Atoi(fileName[0:8])
-	if err != nil {
-		log.Println(err)
-		return true
-	}
 
-	// CheckWhetherUnembargo(date) return true if this date is more than one year old.
-	if CheckWhetherUnembargo(date) {
-		return false
-	}
 	fn := FileName{Name: fileName}
 	localIP := fn.GetLocalIP()
 	if ec.Whitelist[localIP] {

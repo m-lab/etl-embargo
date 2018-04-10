@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+        "strconv"
 	"strings"
 	"time"
 
@@ -125,16 +126,15 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
                         isFristFile = false
                         if len(basename) < 8 {
 		                log.Println("Filename not with right length.")
-		                return true
+		                continue
 	                }
                         date, err := strconv.Atoi(basename[0:8])
 	                if err != nil {
 		                log.Println(err)
-		                return true
+		                continue
 	                }
 
-	               // CheckWhetherUnembargo(date) return true if this date is more than one year old.
-	               if CheckWhetherUnembargo(date) {
+	               if CheckWhetherMoreThanOneYearOld(date) {
 		               moreThanOneYear = true
 	               }
                 }

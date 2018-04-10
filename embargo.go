@@ -97,6 +97,8 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 	publicTw := tar.NewWriter(publicGzw)
 
 	// Handle the small files inside one tar file.
+        moreThanOneYear := false
+        isFristFile := false
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -118,6 +120,37 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 		hdr.ModTime = info.ModTime()
 		hdr.Typeflag = tar.TypeReg
 		output, err := ioutil.ReadAll(tarReader)
+                // Check the date first. If it is > 1 year old, publish all files in this tar
+                if isFristFile {
+                        isFristFile = false
+                        if len(basename) < 8 {
+		                log.Println("Filename not with right length.")
+		                return true
+	                }
+                        date, err := strconv.Atoi(basename[0:8])
+	                if err != nil {
+		                log.Println(err)
+		                return true
+	                }
+
+	               // CheckWhetherUnembargo(date) return true if this date is more than one year old.
+	               if CheckWhetherUnembargo(date) {
+		               moreThanOneYear = true
+	               }
+                }
+                if moreThanOneYear {
+                        // put this file to a public buffer
+			if err := publicTw.WriteHeader(hdr); err != nil {
+				log.Printf("cannot write the public header: %v\n", err)
+				return embargoBuf, publicBuf, err
+			}
+			log.Printf("publish file: %s\n", basename)
+			if _, err := publicTw.Write([]byte(output)); err != nil {
+				log.Printf("cannot write the public content to a buffer: %v\n", err)
+				return embargoBuf, publicBuf, err
+			}
+                        continue
+                }
 		if ec.embargoCheck.ShouldEmbargo(basename) {
 			// put this file to a private buffer
 			if err := embargoTw.WriteHeader(hdr); err != nil {

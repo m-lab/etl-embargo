@@ -49,10 +49,10 @@ func TestUnembargoLegacy(t *testing.T) {
 
 func TestCalculateDate(t *testing.T) {
 	currentTime, _ := strconv.Atoi(time.Now().UTC().Format("20061229"))
-	if embargo.CheckWhetherMoreThanOneYearOld(currentTime) {
+	if embargo.CheckWhetherMoreThanOneYearOld(currentTime, 0) {
 		t.Error("The current date should return false for unembargo check.")
 	}
-	if !embargo.CheckWhetherMoreThanOneYearOld(20060129) {
+	if !embargo.CheckWhetherMoreThanOneYearOld(20060129, 0) {
 		t.Error("This last year date should return true for unembargo check.")
 	}
 }

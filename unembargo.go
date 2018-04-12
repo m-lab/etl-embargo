@@ -72,7 +72,7 @@ func NewConfig(privateBucketName, publicBucketName string) *config {
 func CheckWhetherMoreThanOneYearOld(date int, cutoffDate int) bool {
 	currentTime := time.Now()
         if cutoffDate == 0 {
-	        cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
+	        cutoffDate = (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
         }
 	if date < cutoffDate {
 		return true
@@ -181,7 +181,7 @@ func (nc *config) Unembargo(date int) error {
 
 	log.SetOutput(f)
 
-	if CheckWhetherMoreThanOneYearOld(date) {
+	if CheckWhetherMoreThanOneYearOld(date, 0) {
 		dateStr := strconv.Itoa(date)
 		inputDir := "sidestream/" + dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
 		return UnEmbargoOneDayLegacyFiles(nc.privateBucket, nc.publicBucket, inputDir)

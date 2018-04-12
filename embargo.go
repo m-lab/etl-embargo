@@ -74,7 +74,7 @@ func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf 
 }
 
 // Split one tar files into 2 buffers.
-func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int = 0) (bytes.Buffer, bytes.Buffer, error) {
+func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
@@ -221,7 +221,7 @@ func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) er
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
 	}
-	embargoBuf, publicBuf, err := ec.SplitFile(content)
+	embargoBuf, publicBuf, err := ec.SplitFile(content, 0)
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 		return err

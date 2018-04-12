@@ -50,7 +50,7 @@ func TestSplitTarFile(t *testing.T) {
 	if err != nil {
 		t.Error("Did not perform embargo correctly.\n")
 	}
-	publicGolden, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz")
+	publicGolden, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000-p.tgz")
 	if err != nil {
 		t.Fatal("cannot open public golden data.")
 	}

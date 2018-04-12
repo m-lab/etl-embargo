@@ -74,7 +74,7 @@ func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf 
 }
 
 // Split one tar files into 2 buffers.
-func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
+func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int = 0) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
@@ -134,7 +134,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 		                continue
 	                }
 
-	               if CheckWhetherMoreThanOneYearOld(date) {
+	               if CheckWhetherMoreThanOneYearOld(date, cutoffDate) {
 		               moreThanOneYear = true
 	               }
                 }
@@ -151,7 +151,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 			}
                         continue
                 }
-		if ec.embargoCheck.ShouldEmbargo(basename) {
+		if !ec.embargoCheck.CheckInWhitelist(basename) {
 			// put this file to a private buffer
 			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)

@@ -31,7 +31,7 @@ func TestReadWhitelistFromLocal(t *testing.T) {
 	return
 }
 
-/*
+
 // Require authentication to run.
 func TestReadWhitelistFromGCS(t *testing.T) {
 	embargo_check := new(EmbargoCheck)
@@ -44,26 +44,20 @@ func TestReadWhitelistFromGCS(t *testing.T) {
 	}
 	return
 }
-*/
-func TestShouldEmbargo(t *testing.T) {
+
+func TestCheckInWhitelist(t *testing.T) {
 	embargo_check := new(embargo.EmbargoCheck)
 	embargo_check.ReadWhitelistFromLocal("testdata/whitelist")
 	// After embargo date and IP not whitelisted. Return true, embargoed.
-	// TODO: ShouldEmbargo should allow injecting a timestamp to check.
 	filename1 := "20180225T23:00:00Z_4.34.58.34_0.web100.gz"
-	if !embargo_check.ShouldEmbargo(filename1) {
-		t.Errorf("ShouldEmbargo(%s) = false, but file date is after embargo date and IP not whitelisted (%v).\n", filename1, embargo_check.Whitelist)
+	if embargo_check.CheckInWhitelist(filename1) {
+		t.Errorf("CheckInWhitelist(%s) = true, but IP not whitelisted (%v).\n", filename1, embargo_check.Whitelist)
 	}
 
-	// After embargo date and IP whitelisted. Return false, not embargoed.
+	// IP whitelisted. Return false, not embargoed.
 	filename2 := "20170225T23:00:00Z_213.244.128.170_0.web100.gz"
-	if embargo_check.ShouldEmbargo(filename2) {
-		t.Errorf("ShouldEmbargo(%s) = true, but after embargo date and IP whitelisted (%v).\n", filename2, embargo_check.Whitelist)
-	}
-	// Before embargo date. Return false, not embargoed
-	filename3 := "20150225T23:00:00Z_213.244.128.1_0.web100.gz"
-	if embargo_check.ShouldEmbargo(filename3) {
-		t.Errorf("ShouldEmbargo(%s) = true, but before embargo date.\n", filename3)
+	if !embargo_check.CheckInWhitelist(filename2) {
+		t.Errorf("CheckInWhitelist(%s) = false, but IP whitelisted (%v).\n", filename2, embargo_check.Whitelist)
 	}
 	return
 }

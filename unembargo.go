@@ -66,11 +66,14 @@ func NewConfig(privateBucketName, publicBucketName string) *config {
 	return nc
 }
 
-// Given the current date, return true if the date is more than oneyear ago.
+// Given the current date, return true if the date is earlier than the cutoffDate.
 // The input date is integer in format yyyymmdd
-func CheckWhetherMoreThanOneYearOld(date int) bool {
+// If there is no input for cutoffDate, use one year ago of currentTime.
+func CheckWhetherMoreThanOneYearOld(date int, cutoffDate=0 int) bool {
 	currentTime := time.Now()
-	cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
+        if cutoffDate == 0 {
+	        cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
+        }
 	if date < cutoffDate {
 		return true
 	}

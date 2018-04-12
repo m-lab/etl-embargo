@@ -14,9 +14,11 @@ limitations under the License.
 package embargo_test
 
 import (
+        "strconv"
 	"testing"
+        "time"
 
-	embargo "github.com/m-lab/etl-embargo"
+	"github.com/m-lab/etl-embargo"
 )
 
 func TestReadWhitelistFromLocal(t *testing.T) {
@@ -34,8 +36,8 @@ func TestReadWhitelistFromLocal(t *testing.T) {
 
 // Require authentication to run.
 func TestReadWhitelistFromGCS(t *testing.T) {
-	embargo_check := new(EmbargoCheck)
-	embargo_check.ReadWhitelistFromGCS("whitelist")
+	embargo_check := new(embargo.EmbargoCheck)
+	embargo_check.ReadWhitelistFromGCS("embargo-test", "whitelist_full")
 	if !embargo_check.Whitelist["213.244.128.170"] {
 		t.Error("missing IP in Whitelist: want '213.244.128.170'\n")
 	}
@@ -60,4 +62,14 @@ func TestCheckInWhitelist(t *testing.T) {
 		t.Errorf("CheckInWhitelist(%s) = false, but IP whitelisted (%v).\n", filename2, embargo_check.Whitelist)
 	}
 	return
+}
+
+func TestCalculateDate(t *testing.T) {
+	currentTime, _ := strconv.Atoi(time.Now().UTC().Format("20061229"))
+	if embargo.CheckWhetherMoreThanOneYearOld(currentTime, 0) {
+		t.Error("The current date should return false for unembargo check.")
+	}
+	if !embargo.CheckWhetherMoreThanOneYearOld(20060129, 0) {
+		t.Error("This last year date should return true for unembargo check.")
+	}
 }

@@ -48,7 +48,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 
 	"cloud.google.com/go/storage"
 )
@@ -64,20 +63,6 @@ func NewConfig(privateBucketName, publicBucketName string) *config {
 		publicBucket:  publicBucketName,
 	}
 	return nc
-}
-
-// Given the current date, return true if the date is earlier than the cutoffDate.
-// The input date is integer in format yyyymmdd
-// If the input cutoffDate is 0, use one year ago of currentTime.
-func CheckWhetherMoreThanOneYearOld(date int, cutoffDate int) bool {
-	currentTime := time.Now()
-        if cutoffDate == 0 {
-	        cutoffDate = (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
-        }
-	if date < cutoffDate {
-		return true
-	}
-	return false
 }
 
 // Get filenames for given bucket with the given prefix. Use the service

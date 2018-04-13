@@ -1,5 +1,3 @@
-# Travis configuration for etl-embargo.
-
 language: go
 
 go:

@@ -65,7 +65,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
 	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
 	checkService := CreateService()
 	if checkService == nil {
-		log.Printf("Whitelist: Storage service was not initialized.\n")
+		log.Printf("Storage service was not initialized.\n")
 		return false
 	}
 	whiteList := make(map[string]bool)

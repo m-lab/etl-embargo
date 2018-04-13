@@ -33,8 +33,6 @@ func TestReadWhitelistFromLocal(t *testing.T) {
 	return
 }
 
-
-// Require authentication to run.
 func TestReadWhitelistFromGCS(t *testing.T) {
 	embargo_check := new(embargo.EmbargoCheck)
 	embargo_check.ReadWhitelistFromGCS("embargo-test", "whitelist_full")

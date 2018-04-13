@@ -157,14 +157,6 @@ func (nc *config) Unembargo(date int) error {
 	if date <= 20160000 || date > 21000000 {
 		return errors.New("The date is out of range.")
 	}
-	f, err := os.OpenFile("UnembargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-		return err
-	}
-	defer f.Close()
-
-	log.SetOutput(f)
 
 	if CheckWhetherMoreThanOneYearOld(date, 0) {
 		dateStr := strconv.Itoa(date)

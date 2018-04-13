@@ -4,7 +4,7 @@ language: go
  
 go:
   - 1.8
- 
+
 before_install:
 # Coverage tools
 - go get github.com/mattn/goveralls
@@ -29,4 +29,4 @@ cache:
  
 script:
 # To start, run all the tests.
-go test -v github.com/m-lab/etl-embargo
+- go test -v github.com/m-lab/etl-embargo

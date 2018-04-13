@@ -12,7 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-        "strconv"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,9 +50,9 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 	}
 	nc.embargoService = CreateService()
 
-        if nc.embargoService == nil {
-                log.Printf("Cannot create storage service.\n")
-        }
+	if nc.embargoService == nil {
+		log.Printf("Cannot create storage service.\n")
+	}
 	return nc
 }
 
@@ -98,8 +98,8 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int) (bytes.Buf
 	publicTw := tar.NewWriter(publicGzw)
 
 	// Handle the small files inside one tar file.
-        moreThanOneYear := false
-        isFristFile := false
+	moreThanOneYear := false
+	isFristFile := false
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -121,25 +121,25 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int) (bytes.Buf
 		hdr.ModTime = info.ModTime()
 		hdr.Typeflag = tar.TypeReg
 		output, err := ioutil.ReadAll(tarReader)
-                // Check the date first. If it is > 1 year old, publish all files in this tar
-                if isFristFile {
-                        isFristFile = false
-                        if len(basename) < 8 {
-		                log.Println("Filename not with right length.")
-		                continue
-	                }
-                        date, err := strconv.Atoi(basename[0:8])
-	                if err != nil {
-		                log.Println(err)
-		                continue
-	                }
+		// Check the date first. If it is > 1 year old, publish all files in this tar
+		if isFristFile {
+			isFristFile = false
+			if len(basename) < 8 {
+				log.Println("Filename not with right length.")
+				continue
+			}
+			date, err := strconv.Atoi(basename[0:8])
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 
-	               if CheckWhetherMoreThanOneYearOld(date, cutoffDate) {
-		               moreThanOneYear = true
-	               }
-                }
-                if moreThanOneYear {
-                        // put this file to a public buffer
+			if CheckWhetherMoreThanOneYearOld(date, cutoffDate) {
+				moreThanOneYear = true
+			}
+		}
+		if moreThanOneYear {
+			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
 				return embargoBuf, publicBuf, err
@@ -149,8 +149,8 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int) (bytes.Buf
 				log.Printf("cannot write the public content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
-                        continue
-                }
+			continue
+		}
 		if !ec.embargoCheck.CheckInWhitelist(basename) {
 			// put this file to a private buffer
 			if err := embargoTw.WriteHeader(hdr); err != nil {

@@ -19,7 +19,7 @@ import (
 	"log"
 	"os"
 	"strings"
-        "time"
+	"time"
 )
 
 type EmbargoCheck struct {
@@ -33,9 +33,9 @@ type EmbargoCheck struct {
 // If the input cutoffDate is 0, use one year ago of currentTime.
 func CheckWhetherMoreThanOneYearOld(date int, cutoffDate int) bool {
 	currentTime := time.Now()
-        if cutoffDate == 0 {
-	        cutoffDate = (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
-        }
+	if cutoffDate == 0 {
+		cutoffDate = (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
+	}
 	if date < cutoffDate {
 		return true
 	}

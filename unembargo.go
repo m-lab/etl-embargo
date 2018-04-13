@@ -46,7 +46,6 @@ import (
 	"golang.org/x/net/context"
 	storage_v1 "google.golang.org/api/storage/v1"
 	"log"
-	"os"
 	"strconv"
 
 	"cloud.google.com/go/storage"

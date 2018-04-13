@@ -29,8 +29,4 @@ cache:
 
 script:
 # TODO: set up test coverage
-- go test -v -run Get
-- go test -v -run Read
-- go test -v -run Should
-- go test -v -run Split
-- go test -v -run Cal
+- go test -v github.com/m-lab/etl-embargo

@@ -28,5 +28,9 @@ cache:
     - "$HOME/google-cloud-sdk/"
 
 script:
-# To start, run all the tests.
-- go test -v github.com/m-lab/etl-embargo
+# TODO: set up test coverage
+- go test -v -run Get
+- go test -v -run Read
+- go test -v -run Should
+- go test -v -run Split
+- go test -v -run Cal

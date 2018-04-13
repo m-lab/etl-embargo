@@ -28,10 +28,6 @@ cache:
     - "$HOME/google-cloud-sdk/"
 
 script:
-# TODO: set up test coverage
-- go test -v -run Get
-- go test -v -run Read
-- go test -v -run Should
-- go test -v -run Split
-- go test -v -run Cal
+# To start, run all the tests.
+- go test -v -coverpkg=$COVER_PKGS -coverprofile=embargo.cov github.com/m-lab/etl-embargo ;
 

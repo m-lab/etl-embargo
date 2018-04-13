@@ -29,5 +29,5 @@ cache:
 
 script:
 # To start, run all the tests.
-- go test -v -coverpkg=$COVER_PKGS -coverprofile=embargo.cov github.com/m-lab/etl-embargo ;
+- go test -v github.com/m-lab/etl-embargo
 

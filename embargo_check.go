@@ -82,13 +82,10 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
 }
 
 // Check whether a file with IP in the whitelist.
-// Always return false for non-web100 files.
+// Always return true for non-web100 files.
 // The filename is like: 20170225T23:00:00Z_4.34.58.34_0.web100
-// The embargo date is like 20160225
-// file with IP that is in the IP whitelist are always published. Return true
-// file with IP not in the whitelist. Return true
-// For old file format like 2017/03/15/mlab3.sea03/20170315T12:00:00Z_ALL0.web100
-// it will return true always.
+// file with IP that is in the IP whitelist, return true
+// file with IP not in the whitelist, return false
 func (ec *EmbargoCheck) CheckInWhitelist(fileName string) bool {
 	if !strings.Contains(fileName, "web100") {
 		return true

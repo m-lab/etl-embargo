@@ -12,7 +12,7 @@ import (
 // End to end test, requires authentication.
 // TODO: Enable it on Travis.
 func TestEmbargo(t *testing.T) {
-	sourceBucket := "embargo-test"
+	sourceBucket := "embargo-source-test"
 	testConfig := embargo.NewEmbargoConfig(sourceBucket, "mlab-embargoed-data-test", "mlab-embargo-output-test", "")
 	embargo.DeleteFiles(sourceBucket, "")
 	embargo.UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
@@ -37,7 +37,7 @@ func TestGetDayOfWeek(t *testing.T) {
 // with lists of inner files, call SplitFile on it, then verify that the pub
 // and private buffers contain the correct filenames.
 func TestSplitTarFile(t *testing.T) {
-	testConfig := embargo.NewEmbargoConfig("embargo-test", "mlab-embargoed-data-test", "mlab-embargo-output-test", "")
+	testConfig := embargo.NewEmbargoConfig("embargo-source-test", "mlab-embargoed-data-test", "mlab-embargo-output-test", "")
 
 	// Load input tar file.
 	file, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz")

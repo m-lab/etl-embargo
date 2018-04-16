@@ -29,3 +29,4 @@ cache:
 
 script:
 - go test -v -coverpkg=./... -coverprofile=embargo.cov github.com/m-lab/etl-embargo
+- $HOME/gopath/bin/goveralls -coverprofile=embargo.cov -service=travis-ci

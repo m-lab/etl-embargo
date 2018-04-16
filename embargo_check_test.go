@@ -62,12 +62,22 @@ func TestCheckInWhitelist(t *testing.T) {
 	return
 }
 
-func TestCalculateDate(t *testing.T) {
+func TestCheckWhetherMoreThanOneYearOld(t *testing.T) {
 	currentTime, _ := strconv.Atoi(time.Now().UTC().Format("20061229"))
 	if embargo.CheckWhetherMoreThanOneYearOld(currentTime, 0) {
-		t.Error("The current date should return false for unembargo check.")
+		t.Error("The current date should return false for WhetherMoreThanOneYearOld check.")
 	}
 	if !embargo.CheckWhetherMoreThanOneYearOld(20060129, 0) {
-		t.Error("This last year date should return true for unembargo check.")
+		t.Error("This last year date should return true for WhetherMoreThanOneYearOld check.")
+	}
+	if embargo.CheckWhetherMoreThanOneYearOld(20170329, 20160829) {
+		t.Error("This input date 20170329 should return false for WhetherMoreThanOneYearOld check given cutoff date 20160829.")
+	}
+}
+
+func TestGetDayOfWeek(t *testing.T) {
+	dayOfWeek, err := embargo.GetDayOfWeek("sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz")
+	if err != nil || dayOfWeek != "Tuesday" {
+		t.Error("Did not get day of week correctly.\n")
 	}
 }

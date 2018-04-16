@@ -20,7 +20,7 @@ import (
 )
 
 // This end to end test require anthentication for running on Travis.
-func XTestUnembargoLegacy(t *testing.T) {
+func TestUnembargoLegacy(t *testing.T) {
 	privateBucket := "mlab-embargoed-data-test"
 	publicBucket := "mlab-bigstore-data-test"
 	testConfig := embargo.NewConfig(privateBucket, publicBucket)

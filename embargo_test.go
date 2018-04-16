@@ -16,18 +16,11 @@ func TestEmbargo(t *testing.T) {
 	testConfig := embargo.NewEmbargoConfig(sourceBucket, "mlab-embargoed-data-test", "mlab-embargo-output-test", "")
 	embargo.DeleteFiles(sourceBucket, "")
 	embargo.UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
-	if testConfig.EmbargoOneDayData("2017/03/15") != nil {
+	if testConfig.EmbargoOneDayData("20170315", 20160822) != nil {
 		t.Error("Did not perform embargo correctly.\n")
 	}
 	embargo.DeleteFiles(sourceBucket, "")
 	return
-}
-
-func TestGetDayOfWeek(t *testing.T) {
-	dayOfWeek, err := embargo.GetDayOfWeek("sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz")
-	if err != nil || dayOfWeek != "Tuesday" {
-		t.Error("Did not get day of week correctly.\n")
-	}
 }
 
 // This test verifies that func embargoBuf() correctly splits the input tar
@@ -46,7 +39,7 @@ func TestSplitTarFile(t *testing.T) {
 	}
 	defer file.Close()
 
-	privateBuf, publicBuf, err := testConfig.SplitFile(file, 20160820)
+	privateBuf, publicBuf, err := testConfig.SplitFile(file, false)
 	if err != nil {
 		t.Error("Did not perform embargo correctly.\n")
 	}

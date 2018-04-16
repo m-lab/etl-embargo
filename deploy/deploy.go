@@ -52,7 +52,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Process the date if there is not single file.
 	if len(date) > 0 {
-		testConfig.EmbargoOneDayData(date[0])
+		testConfig.EmbargoOneDayData(date[0], 0)
 		fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
 	}
 }

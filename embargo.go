@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"golang.org/x/net/context"
 	storage "google.golang.org/api/storage/v1"
@@ -74,7 +73,7 @@ func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf 
 }
 
 // Split one tar files into 2 buffers.
-func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int) (bytes.Buffer, bytes.Buffer, error) {
+func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
@@ -98,8 +97,6 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int) (bytes.Buf
 	publicTw := tar.NewWriter(publicGzw)
 
 	// Handle the small files inside one tar file.
-	moreThanOneYear := false
-	isFristFile := false
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -121,23 +118,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int) (bytes.Buf
 		hdr.ModTime = info.ModTime()
 		hdr.Typeflag = tar.TypeReg
 		output, err := ioutil.ReadAll(tarReader)
-		// Check the date first. If it is > 1 year old, publish all files in this tar
-		if isFristFile {
-			isFristFile = false
-			if len(basename) < 8 {
-				log.Println("Filename not with right length.")
-				continue
-			}
-			date, err := strconv.Atoi(basename[0:8])
-			if err != nil {
-				log.Println(err)
-				continue
-			}
 
-			if CheckWhetherMoreThanOneYearOld(date, cutoffDate) {
-				moreThanOneYear = true
-			}
-		}
 		if moreThanOneYear {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
@@ -195,33 +176,18 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, cutoffDate int) (bytes.Buf
 	return embargoBuf, publicBuf, nil
 }
 
-// EmbargoOneTar process a filepath string like
-// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
-// return "Tuesday" for date "2017/05/16"
-func GetDayOfWeek(filename string) (string, error) {
-	if len(filename) < 21 {
-		return "", errors.New("invalid filename.")
-	}
-	date := filename[11:21]
-	dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
-	parsedDate, err := time.Parse("2006-01-02 15:04:05", dateStr)
-	if err != nil {
-		return "", err
-	}
-	return parsedDate.Weekday().String(), nil
-}
-
 // EmbargoOneTar processes one tar file, splits it to 2 files. The embargoed files
 // will be saved in a private bucket, and the unembargoed part will be save in a
 // public bucket.
 // The private file will have a different name, so it can be copied to public
 // bucket directly when it becomes one year old.
-func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) error {
+// The tarfileName is like 20170516T000000Z-mlab1-atl06-sidestream-0000.tgz
+func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, moreThanOneYear bool) error {
 	dayOfWeek, err := GetDayOfWeek(tarfileName)
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
 	}
-	embargoBuf, publicBuf, err := ec.SplitFile(content, 0)
+	embargoBuf, publicBuf, err := ec.SplitFile(content, moreThanOneYear)
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 		return err
@@ -236,10 +202,11 @@ func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) er
 }
 
 // Embargo do embargo ckecking to all files in the sourceBucket.
-// The input date is in format yyyy/mm/dd
+// The input date is string in format yyyymmdd
+// The cutoffDate is integer in format yyyymmdd
 // TODO: handle midway crash. Since the source bucket is unchanged, if it failed
 // in the middle, we just rerun it for that specific day.
-func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
+func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 	f, err := os.OpenFile("EmbargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -257,12 +224,14 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
 	}
 
 	sourceFiles := ec.embargoService.Objects.List(ec.sourceBucket)
-	sourceFiles.Prefix("sidestream/" + date)
+	sourceFiles.Prefix("sidestream/" + date[0:4] + "/" + date[4:6] + "/" + date[6:8])
 	sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
 	if err != nil {
 		log.Printf("Objects List of source bucket failed: %v\n", err)
 		return err
 	}
+	dateInteger, err := strconv.Atoi(date[0:8])
+	moreThanOneYear := CheckWhetherMoreThanOneYearOld(dateInteger, cutoffDate)
 	for _, oneItem := range sourceFilesList.Items {
 		//fmt.Printf(oneItem.Name + "\n")
 		if !strings.Contains(oneItem.Name, "tgz") || !strings.Contains(oneItem.Name, "sidestream") {
@@ -274,7 +243,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
 			log.Printf("fail to read a tar file from the bucket: %v\n", err)
 			return err
 		}
-		if err := ec.EmbargoOneTar(fileContent.Body, oneItem.Name); err != nil {
+		if err := ec.EmbargoOneTar(fileContent.Body, oneItem.Name, moreThanOneYear); err != nil {
 			return err
 		}
 	}
@@ -288,11 +257,14 @@ func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
 	}
 
 	fileContent, err := ec.embargoService.Objects.Get(ec.sourceBucket, filename).Download()
+	baseName := filepath.Base(filename)
+	dateInteger, err := strconv.Atoi(baseName[0:8])
+	moreThanOneYear := CheckWhetherMoreThanOneYearOld(dateInteger, 0)
 	if err != nil {
 		log.Printf("fail to read a tar file from the bucket: %v\n", err)
 		return err
 	}
-	if err := ec.EmbargoOneTar(fileContent.Body, filename); err != nil {
+	if err := ec.EmbargoOneTar(fileContent.Body, filename, moreThanOneYear); err != nil {
 		return err
 	}
 	return nil

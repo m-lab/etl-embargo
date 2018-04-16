@@ -16,6 +16,7 @@ package embargo
 
 import (
 	"bufio"
+	"errors"
 	"log"
 	"os"
 	"strings"
@@ -25,8 +26,6 @@ import (
 type EmbargoCheck struct {
 	Whitelist map[string]bool
 }
-
-// TODO: Read IP whitelist from Data Store.
 
 // Given the current date, return true if the date is earlier than the cutoffDate.
 // The input date is integer in format yyyymmdd
@@ -40,6 +39,22 @@ func CheckWhetherMoreThanOneYearOld(date int, cutoffDate int) bool {
 		return true
 	}
 	return false
+}
+
+// For a filepath string like
+// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
+// return "Tuesday" for date "2017/05/16"
+func GetDayOfWeek(filename string) (string, error) {
+	if len(filename) < 21 {
+		return "", errors.New("invalid filename.")
+	}
+	date := filename[11:21]
+	dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
+	parsedDate, err := time.Parse("2006-01-02 15:04:05", dateStr)
+	if err != nil {
+		return "", err
+	}
+	return parsedDate.Weekday().String(), nil
 }
 
 // ReadWhitelistFromLocal load IP whitelist from a local file.

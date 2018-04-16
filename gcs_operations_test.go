@@ -21,8 +21,8 @@ import (
 )
 
 func TestBucketOperations(t *testing.T) {
-	bucketName := "test-bucket-gcs-operations"
-	sourceBucket := "test-embargo"
+	bucketName := "bucket-gcs-operations-test"
+	sourceBucket := "embargo-test"
 
 	result := embargo.CopyOneFile(sourceBucket, bucketName, "whitelist_full")
 	if result == false {

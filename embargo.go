@@ -119,7 +119,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 		hdr.Typeflag = tar.TypeReg
 		output, err := ioutil.ReadAll(tarReader)
 
-		if moreThanOneYear {
+		if moreThanOneYear || ec.embargoCheck.CheckInWhitelist(basename) {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
@@ -131,8 +131,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 				return embargoBuf, publicBuf, err
 			}
 			continue
-		}
-		if !ec.embargoCheck.CheckInWhitelist(basename) {
+		} else {
 			// put this file to a private buffer
 			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
@@ -141,17 +140,6 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 			//log.Printf("embargo file: %s\n", basename)
 			if _, err := embargoTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the embargoed content to a buffer: %v\n", err)
-				return embargoBuf, publicBuf, err
-			}
-		} else {
-			// put this file to a public buffer
-			if err := publicTw.WriteHeader(hdr); err != nil {
-				log.Printf("cannot write the public header: %v\n", err)
-				return embargoBuf, publicBuf, err
-			}
-			//log.Printf("publish file: %s\n", basename)
-			if _, err := publicTw.Write([]byte(output)); err != nil {
-				log.Printf("cannot write the public content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
 		}

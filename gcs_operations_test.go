@@ -20,16 +20,11 @@ import (
 	embargo "github.com/m-lab/etl-embargo"
 )
 
-func TestBucketCreation(t *testing.T) {
+func TestBucketOperations(t *testing.T) {
 	bucketName := "test-bucket-gcs-operations"
-	sourceBucket := "embargo-test"
-	result := embargo.CreateBucket("mlab-sandbox", bucketName)
-	if result == false {
-		t.Errorf("Cannot create bucket")
-		return
-	}
+	sourceBucket := "test-embargo"
 
-	result = embargo.CopyOneFile(sourceBucket, bucketName, "whitelist_full")
+	result := embargo.CopyOneFile(sourceBucket, bucketName, "whitelist_full")
 	if result == false {
 		t.Errorf("Cannot copy file from another bucket.")
 		return
@@ -53,11 +48,4 @@ func TestBucketCreation(t *testing.T) {
 		t.Errorf("Cannot delete files.")
 		return
 	}
-
-	result = embargo.DeleteBucket(bucketName)
-	if result == false {
-		t.Errorf("Cannot delete bucket.")
-		return
-	}
-
 }

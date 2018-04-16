@@ -11,7 +11,7 @@ import (
 
 // End to end test, requires authentication.
 // TODO: Enable it on Travis.
-func TestEmbargo(t *testing.T) {
+func XTestEmbargo(t *testing.T) {
 	sourceBucket := "sidestream-embargo"
 	testConfig := embargo.NewEmbargoConfig(sourceBucket, "mlab-embargoed-data", "embargo-output", "")
 	embargo.DeleteFiles(sourceBucket, "")

@@ -16,8 +16,11 @@ package embargo
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -57,6 +60,16 @@ func GetDayOfWeek(filename string) (string, error) {
 	return parsedDate.Weekday().String(), nil
 }
 
+// Load whitelist IP info from cloud storage.
+const SITE_IP_URL_TEST = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
+const SITE_IP_URL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
+
+type Site struct {
+	Hostname string `json:"hostname"`
+	Ipv4     string `json:"ipv4"`
+	Ipv6     string `json:"ipv6"`
+}
+
 // ReadWhitelistFromLocal load IP whitelist from a local file.
 func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 	file, err := os.Open(path)
@@ -75,25 +88,46 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 	return true
 }
 
-// ReadWhitelistFromGCS load IP whitelist from cloud storage.
-func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
-	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
-	checkService := CreateService()
-	if checkService == nil {
-		log.Printf("Storage service was not initialized.\n")
+func (ec *EmbargoCheck) LoadWhitelist() bool {
+	project := os.Getenv("GCLOUD_PROJECT")
+	log.Printf("Using project: %s\n", project)
+	json_url := SITE_IP_URL_TEST
+	if project == "mlab-oti" {
+		json_url = SITE_IP_URL
+	}
+
+	resp, err := http.Get(json_url)
+	if err != nil {
+		log.Printf("cannot download site IP json file.\n")
 		return false
 	}
-	whiteList := make(map[string]bool)
-	if fileContent, err := checkService.Objects.Get(bucket, path).Download(); err == nil {
-		scanner := bufio.NewScanner(fileContent.Body)
-		for scanner.Scan() {
-			oneLine := strings.TrimSuffix(scanner.Text(), "\n")
-			whiteList[oneLine] = true
-		}
-		ec.Whitelist = whiteList
-		return true
+	defer resp.Body.Close()
+
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Cannot read site IP json files.\n")
+		return false
 	}
-	return false
+
+	sites := make([]Site, 0)
+	if err := json.Unmarshal(body, &sites); err != nil {
+		log.Printf("Cannot parse site IP json files.\n")
+		return false
+	}
+
+	whiteList := make(map[string]bool)
+	for _, site := range sites {
+		//log.Printf(site.hostname)
+		if site.Ipv4 != "" {
+			whiteList[site.Ipv4] = true
+		}
+		if site.Ipv6 != "" {
+			whiteList[site.Ipv6] = true
+		}
+	}
+	ec.Whitelist = whiteList
+	return true
 }
 
 // Check whether a file with IP in the whitelist.

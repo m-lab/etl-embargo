@@ -21,21 +21,17 @@ import (
 	"github.com/m-lab/etl-embargo"
 )
 
-func TestReadWhitelistFromLocal(t *testing.T) {
+func TestLoadWhitelist(t *testing.T) {
 	embargo_check := new(embargo.EmbargoCheck)
-	embargo_check.ReadWhitelistFromLocal("testdata/whitelist")
-	if !embargo_check.Whitelist["213.244.128.170"] {
-		t.Error("missing IP in Whitelist: want '213.244.128.170'\n")
-	}
-	if embargo_check.Whitelist["2001:4c08:2003:2::16"] {
-		t.Error("IP 2001:4c08:2003:2::16 should not be in Whitelist.\n")
+	if !embargo_check.LoadWhitelist() {
+		t.Error("Do not load site IP json file from cloud storage correctly.")
 	}
 	return
 }
 
-func TestReadWhitelistFromGCS(t *testing.T) {
+func TestReadWhitelistFromLocal(t *testing.T) {
 	embargo_check := new(embargo.EmbargoCheck)
-	embargo_check.ReadWhitelistFromGCS("embargo-test", "whitelist_full")
+	embargo_check.ReadWhitelistFromLocal("testdata/whitelist")
 	if !embargo_check.Whitelist["213.244.128.170"] {
 		t.Error("missing IP in Whitelist: want '213.244.128.170'\n")
 	}

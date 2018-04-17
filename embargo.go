@@ -29,8 +29,6 @@ type EmbargoConfig struct {
 	embargoService    *storage.Service
 }
 
-var WhiteListBucket = "embargo-test"
-
 func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) *EmbargoConfig {
 	nc := &EmbargoConfig{
 		sourceBucket:      sourceBucketName,
@@ -38,14 +36,15 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 		destPublicBucket:  publicBucketName,
 	}
 	if whitelistFile == "" {
-		results := nc.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full")
-		if !results {
-			log.Printf("Cannot load whitelist.\n")
-		} else {
-			log.Printf("Load whitelist from GCS.\n")
+		if !nc.embargoCheck.LoadWhitelist() {
+			log.Printf("Cannot load whitelist from GCS.\n")
+			return nil
 		}
 	} else {
-		nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
+		if !nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile) {
+			log.Printf("Cannot load whitelist from local.\n")
+			return nil
+		}
 	}
 	nc.embargoService = CreateService()
 
@@ -239,7 +238,9 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 }
 
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	ec.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full")
+	if !ec.embargoCheck.LoadWhitelist() {
+		return errors.New("Cannot load whitelist.")
+	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {
 		return errors.New("Not a proper sidestream file.")
 	}

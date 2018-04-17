@@ -150,8 +150,5 @@ func (ec *EmbargoCheck) CheckInWhitelist(fileName string) bool {
 
 	fn := FileName{Name: fileName}
 	localIP := fn.GetLocalIP()
-	if ec.Whitelist[localIP] {
-		return true
-	}
-	return false
+	return ec.Whitelist[localIP]
 }

@@ -70,6 +70,26 @@ type Site struct {
 	Ipv6     string `json:"ipv6"`
 }
 
+// ParseJson parses bytes into array of struct.
+func ParseJson(body []byte) (map[string]bool, error) {
+	sites := make([]Site, 0)
+	whiteList := make(map[string]bool)
+	if err := json.Unmarshal(body, &sites); err != nil {
+		log.Printf("Cannot parse site IP json files.")
+		return whiteList, errors.New("Cannot parse site IP json files.")
+	}
+
+	for _, site := range sites {
+		if site.Ipv4 != "" {
+			whiteList[site.Ipv4] = true
+		}
+		if site.Ipv6 != "" {
+			whiteList[site.Ipv6] = true
+		}
+	}
+	return whiteList, nil
+}
+
 // ReadWhitelistFromLocal load IP whitelist from a local file.
 func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 	file, err := os.Open(path)
@@ -88,6 +108,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 	return true
 }
 
+// LoadWhitelist load the IP whitelist from GCS.
 func (ec *EmbargoCheck) LoadWhitelist() bool {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("Using project: %s\n", project)
@@ -110,28 +131,15 @@ func (ec *EmbargoCheck) LoadWhitelist() bool {
 		return false
 	}
 
-	sites := make([]Site, 0)
-	if err := json.Unmarshal(body, &sites); err != nil {
-		log.Printf("Cannot parse site IP json files.\n")
-		return false
+	ec.Whitelist, err = ParseJson(body)
+	if err == nil {
+		return true
 	}
-
-	whiteList := make(map[string]bool)
-	for _, site := range sites {
-		//log.Printf(site.hostname)
-		if site.Ipv4 != "" {
-			whiteList[site.Ipv4] = true
-		}
-		if site.Ipv6 != "" {
-			whiteList[site.Ipv6] = true
-		}
-	}
-	ec.Whitelist = whiteList
-	return true
+	return false
 }
 
-// Check whether a file with IP in the whitelist.
-// Always return true for non-web100 files.
+// CheckInWhitelist checks whether the IP in fileName is in the whitelist.
+// It always returns true for non-web100 files.
 // The filename is like: 20170225T23:00:00Z_4.34.58.34_0.web100
 // file with IP that is in the IP whitelist, return true
 // file with IP not in the whitelist, return false

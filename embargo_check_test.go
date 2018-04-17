@@ -29,6 +29,30 @@ func TestLoadWhitelist(t *testing.T) {
 	return
 }
 
+func TestParseJson(t *testing.T) {
+	body := []byte(`[
+  {
+    "hostname": "mlab2.acc02.measurement-lab.org", 
+    "ipv4": "196.49.14.214", 
+    "ipv6": ""
+  }, 
+  {
+    "hostname": "mlab3.acc02.measurement-lab.org", 
+    "ipv4": "196.49.14.227", 
+    "ipv6": ""
+  }, 
+  {
+    "hostname": "mlab1.acc02.measurement-lab.org", 
+    "ipv4": "196.49.14.201", 
+    "ipv6": ""
+  }
+]`)
+	whitelist, err := embargo.ParseJson(body)
+	if err != nil || len(whitelist) != 3 || !whitelist["196.49.14.227"] {
+		t.Error("Do not parse bytes into struct correctly.")
+	}
+}
+
 func TestReadWhitelistFromLocal(t *testing.T) {
 	embargo_check := new(embargo.EmbargoCheck)
 	embargo_check.ReadWhitelistFromLocal("testdata/whitelist")

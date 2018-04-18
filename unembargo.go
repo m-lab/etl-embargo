@@ -47,6 +47,7 @@ import (
 	storage_v1 "google.golang.org/api/storage/v1"
 	"log"
 	"strconv"
+	"time"
 
 	"cloud.google.com/go/storage"
 )
@@ -156,8 +157,9 @@ func (nc *config) Unembargo(date int) error {
 	if date <= 20160000 || date > 21000000 {
 		return errors.New("The date is out of range.")
 	}
-
-	if CheckWhetherMoreThanOneYearOld(date, 0) {
+        currentTime := time.Now()
+	cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
+	if date < cutoffDate {
 		dateStr := strconv.Itoa(date)
 		inputDir := "sidestream/" + dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
 		return UnEmbargoOneDayLegacyFiles(nc.privateBucket, nc.publicBucket, inputDir)

@@ -219,7 +219,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 		return err
 	}
 	dateInteger, err := strconv.Atoi(date[0:8])
-	moreThanOneYear := CheckWhetherMoreThanOneYearOld(dateInteger, cutoffDate)
+	moreThanOneYear := dateInteger < cutoffDate
 	for _, oneItem := range sourceFilesList.Items {
 		//fmt.Printf(oneItem.Name + "\n")
 		if !strings.Contains(oneItem.Name, "tgz") || !strings.Contains(oneItem.Name, "sidestream") {

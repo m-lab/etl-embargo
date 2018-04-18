@@ -14,9 +14,7 @@ limitations under the License.
 package embargo_test
 
 import (
-	"strconv"
 	"testing"
-	"time"
 
 	"github.com/m-lab/etl-embargo"
 )

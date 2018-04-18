@@ -16,11 +16,8 @@ package embargo
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"time"

@@ -30,20 +30,6 @@ type EmbargoCheck struct {
 	Whitelist map[string]bool
 }
 
-// Given the current date, return true if the date is earlier than the cutoffDate.
-// The input date is integer in format yyyymmdd
-// If the input cutoffDate is 0, use one year ago of currentTime.
-func CheckWhetherMoreThanOneYearOld(date int, cutoffDate int) bool {
-	currentTime := time.Now()
-	if cutoffDate == 0 {
-		cutoffDate = (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
-	}
-	if date < cutoffDate {
-		return true
-	}
-	return false
-}
-
 // For a filepath string like
 // "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
 // return "Tuesday" for date "2017/05/16"

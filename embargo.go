@@ -243,7 +243,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 }
 
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	if !ec.embargoCheck.LoadWhitelist() {
+	if !ec.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full") {
 		return errors.New("Cannot load whitelist.")
 	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {

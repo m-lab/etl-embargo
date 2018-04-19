@@ -45,6 +45,10 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	filePath := removePrefix[bucketNameEnd+1:]
 
 	testConfig := embargo.NewEmbargoConfig(sourceBucket, privateBucket[0], publicBucket[0], "")
+	if testConfig == nil {
+		fmt.Fprint(w, "Cannot create embargo service.\n")
+		return
+	}
 	if fn != "" {
 		testConfig.EmbargoSingleFile(filePath)
 		fmt.Fprint(w, "Done with embargo single file "+fn+" \n")

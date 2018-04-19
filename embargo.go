@@ -54,7 +54,8 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 	}
 	nc.embargoService = CreateService()
 	if nc.embargoService == nil {
-		log.Fatal("Cannot create storage service.\n")
+		log.Printf("Cannot create storage service.\n")
+		return nil
 	}
 	return nc
 }

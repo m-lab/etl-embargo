@@ -1,16 +1,3 @@
-/*
-Copyright 2013 Google Inc.
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-	http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 // Implement whitelist loading and embargo check based on filename.
 package embargo
 
@@ -43,7 +30,7 @@ func GetDayOfWeek(filename string) (string, error) {
 	return parsedDate.Weekday().String(), nil
 }
 
-// ReadWhitelistFromGCS load IP whitelist from cloud storage.
+// ReadWhitelistFromGCS loads IP whitelist from cloud storage.
 func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
 	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
 	checkService := CreateService()
@@ -64,7 +51,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
 	return false
 }
 
-// ReadWhitelistFromLocal load IP whitelist from a local file.
+// ReadWhitelistFromLocal loads IP whitelist from a local file.
 func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 	file, err := os.Open(path)
 	if err != nil {

@@ -59,7 +59,7 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 	return nc
 }
 
-// Write results to GCS.
+// WriteResults writes results to GCS.
 func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf bytes.Buffer) error {
 	embargoTarfileName := strings.Replace(tarfileName, ".tgz", "-e.tgz", -1)
 	publicObject := &storage.Object{Name: tarfileName}
@@ -76,7 +76,7 @@ func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf 
 	return nil
 }
 
-// Split one tar files into 2 buffers.
+// SplitFile splits one tar files into 2 buffers.
 func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
@@ -192,7 +192,7 @@ func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, mo
 	return nil
 }
 
-// Embargo do embargo ckecking to all files in the sourceBucket.
+// EmbargoOneDayData do embargo for one day files.
 // The input date is string in format yyyymmdd
 // The cutoffDate is integer in format yyyymmdd
 // TODO: handle midway crash. Since the source bucket is unchanged, if it failed
@@ -245,6 +245,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 	return nil
 }
 
+// EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
 	if !ec.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full") {
 		return errors.New("Cannot load whitelist.")

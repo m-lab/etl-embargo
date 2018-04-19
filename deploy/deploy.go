@@ -14,7 +14,7 @@ import (
 	"github.com/m-lab/etl/storage"
 )
 
-// For now, we can handle data for one day or a single file.
+// EmbargoHandler handles data for one day or a single file.
 // TODO(dev): make sure only authorized users can call this.
 // The input URL is like: "hostname:port/submit?date=yyyymmdd&file=gs://scraper-mlab-sandbox/sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz&&publicBucket=archive-mlab-sandbox&&privateBucket=embargo-mlab-sandbox"
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {

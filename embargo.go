@@ -31,7 +31,7 @@ type EmbargoConfig struct {
 }
 
 //TODO: load whitelits from GCS through public link.
-var WhiteListBucket = "embargo-testing"
+var WhiteListBucket = "m-lab"
 
 func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) *EmbargoConfig {
 	nc := &EmbargoConfig{

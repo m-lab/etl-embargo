@@ -57,9 +57,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Process the date if there is not single file.
 	if len(date) > 0 {
-		currentTime := time.Now()
-		cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
-		testConfig.EmbargoOneDayData(date[0], cutoffDate)
+		testConfig.EmbargoOneDayData(date[0], embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0)))
 		fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
 	}
 }

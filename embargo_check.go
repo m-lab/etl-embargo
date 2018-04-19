@@ -30,6 +30,11 @@ func GetDayOfWeek(filename string) (string, error) {
 	return parsedDate.Weekday().String(), nil
 }
 
+// FormatDateAsInt return a date in interger as format yyyymmdd.
+func FormatDateAsInt(t time.Time) int {
+	return t.Year()*10000 + int(t.Month())*100 + t.Day()
+}
+
 // ReadWhitelistFromGCS loads IP whitelist from cloud storage.
 func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
 	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.

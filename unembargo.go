@@ -157,9 +157,7 @@ func (nc *config) Unembargo(date int) error {
 
 	log.SetOutput(f)
 
-	currentTime := time.Now()
-	cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
-	if date < cutoffDate {
+	if date < FormatDateAsInt(time.Now().AddDate(-1, 0, 0)) {
 		dateStr := strconv.Itoa(date)
 		inputDir := "sidestream/" + dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
 		return UnEmbargoOneDayLegacyFiles(nc.privateBucket, nc.publicBucket, inputDir)

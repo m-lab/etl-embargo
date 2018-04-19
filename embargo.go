@@ -270,9 +270,7 @@ func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
 		return err
 	}
 
-	currentTime := time.Now()
-	cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
-	moreThanOneYear := dateInteger < cutoffDate
+	moreThanOneYear := dateInteger < FormatDateAsInt(time.Now().AddDate(-1, 0, 0))
 
 	if err := ec.EmbargoOneTar(fileContent.Body, filename, moreThanOneYear); err != nil {
 		return err

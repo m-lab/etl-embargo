@@ -31,5 +31,4 @@ script:
 - go test -v -coverpkg=./... -coverprofile=embargo.cov github.com/m-lab/etl-embargo
 
 # Coveralls
-- $HOME/gopath/bin/gocovmerge *.cov > merge.cov
-- $HOME/gopath/bin/goveralls -coverprofile=merge.cov -service=travis-ci
+- $HOME/gopath/bin/goveralls -coverprofile=embargo.cov -service=travis-ci

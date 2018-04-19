@@ -134,7 +134,6 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 				log.Printf("cannot write the public content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
-			continue
 		} else {
 			// put this file to a private buffer
 			if err := embargoTw.WriteHeader(hdr); err != nil {

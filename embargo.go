@@ -222,6 +222,10 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 		return err
 	}
 	dateInteger, err := strconv.Atoi(date[0:8])
+	if err != nil {
+		log.Printf("Cannot get valid date: %v\n", err)
+		return err
+	}
 	moreThanOneYear := dateInteger < cutoffDate
 	for _, oneItem := range sourceFilesList.Items {
 		//fmt.Printf(oneItem.Name + "\n")
@@ -250,15 +254,21 @@ func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
 	}
 
 	fileContent, err := ec.embargoService.Objects.Get(ec.sourceBucket, filename).Download()
+	if err != nil {
+		log.Printf("fail to read tar file from the bucket: %v\n", err)
+		return err
+	}
 	baseName := filepath.Base(filename)
 	dateInteger, err := strconv.Atoi(baseName[0:8])
+	if err != nil {
+		log.Printf("fail to get valid date from filename: %v\n", err)
+		return err
+	}
+
 	currentTime := time.Now()
 	cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
 	moreThanOneYear := dateInteger < cutoffDate
-	if err != nil {
-		log.Printf("fail to read a tar file from the bucket: %v\n", err)
-		return err
-	}
+
 	if err := ec.EmbargoOneTar(fileContent.Body, filename, moreThanOneYear); err != nil {
 		return err
 	}

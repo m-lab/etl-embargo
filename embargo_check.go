@@ -27,9 +27,9 @@ type EmbargoCheck struct {
 	Whitelist map[string]bool
 }
 
-// For a filepath string like
+// GetDayOfWeek returns "Tuesday" for date "2017/05/16"
+// for input filepath string like
 // "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
-// return "Tuesday" for date "2017/05/16"
 func GetDayOfWeek(filename string) (string, error) {
 	if len(filename) < 21 {
 		return "", errors.New("invalid filename.")

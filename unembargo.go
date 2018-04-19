@@ -157,7 +157,7 @@ func (nc *config) Unembargo(date int) error {
 	if date <= 20160000 || date > 21000000 {
 		return errors.New("The date is out of range.")
 	}
-        currentTime := time.Now()
+	currentTime := time.Now()
 	cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
 	if date < cutoffDate {
 		dateStr := strconv.Itoa(date)

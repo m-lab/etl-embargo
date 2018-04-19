@@ -123,7 +123,10 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 		hdr.ModTime = info.ModTime()
 		hdr.Typeflag = tar.TypeReg
 		output, err := ioutil.ReadAll(tarReader)
-
+		if err != nil {
+			log.Printf("cannot read the tar file: %v\n", err)
+			return embargoBuf, publicBuf, err
+		}
 		if moreThanOneYear || ec.embargoCheck.CheckInWhitelist(basename) {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {

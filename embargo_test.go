@@ -19,6 +19,7 @@ func TestEmbargo(t *testing.T) {
 	if testConfig.EmbargoOneDayData("20170315", 20160822) != nil {
 		t.Error("Did not perform embargo correctly.\n")
 	}
+
 	embargo.DeleteFiles(sourceBucket, "")
 	return
 }

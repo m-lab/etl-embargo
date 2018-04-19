@@ -7,6 +7,7 @@ import (
 	// Enable exported debug vars.  See https://golang.org/pkg/expvar/
 	_ "expvar"
 	"strings"
+        "time"
 
 	"github.com/m-lab/etl-embargo"
 	"github.com/m-lab/etl-embargo/metrics"
@@ -52,7 +53,9 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Process the date if there is not single file.
 	if len(date) > 0 {
-		testConfig.EmbargoOneDayData(date[0], 0)
+                currentTime := time.Now()
+	        cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
+		testConfig.EmbargoOneDayData(date[0], cutoffDate)
 		fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
 	}
 }

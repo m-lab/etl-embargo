@@ -29,10 +29,9 @@ func TestBucketOperations(t *testing.T) {
 		t.Errorf("The two buckets are not the same.")
 		return
 	}
-	// The destBucket need to be cleaned up if the following test failed.
 	result = embargo.DeleteFiles(destBucket, "")
 	if result == false {
-		t.Errorf("Cannot delete files.")
+		t.Errorf("Cannot delete files. The bucket bucket-gcs-operations-mlab-testing needs to be cleaned up before rerunning the test.")
 		return
 	}
 }

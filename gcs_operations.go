@@ -13,7 +13,7 @@ import (
 	storage "google.golang.org/api/storage/v1"
 )
 
-// Create GCS service used by the following functions.
+// CreateService creates GCS service used by the following functions.
 func CreateService() *storage.Service {
 	// This scope allows the application full control over resources in Google Cloud Storage
 	var scope = storage.DevstorageFullControlScope
@@ -32,7 +32,7 @@ func CreateService() *storage.Service {
 
 // TODO: Create service in a Singleton object, and reuse them for all GCS requests.
 
-// Create a new bucket. Return true if it already exsits or is created successfully.
+// CreateBucket creates a new bucket. Return true if it already exsits or is created successfully.
 func CreateBucket(projectID string, bucketName string) bool {
 	service := CreateService()
 	if service == nil {
@@ -54,7 +54,7 @@ func CreateBucket(projectID string, bucketName string) bool {
 	return true
 }
 
-// Given the bucket name, return array of file names in that bucket. ("ls")
+// GetFileNamesFromBucket returns array of file names in that bucket given the bucket name,. ("ls")
 func GetFileNamesFromBucket(bucketName string) []string {
 	service := CreateService()
 	if service == nil {
@@ -84,7 +84,7 @@ func GetFileNamesFromBucket(bucketName string) []string {
 	return fileNames
 }
 
-// Delete all files with specified prefix from bucket. ("rm")
+// DeleteFiles deletes all files with specified prefix from bucket. ("rm")
 func DeleteFiles(bucketName string, prefixFileName string) bool {
 	service := CreateService()
 	if service == nil {
@@ -154,7 +154,7 @@ func DeleteBucket(bucketName string) bool {
 
 }
 
-// Upload one file from local path to bucket. ("cp")
+// UploadFile uploads one file from local path to bucket. ("cp")
 func UploadFile(bucketName string, fileName string, targetdir string) bool {
 	service := CreateService()
 	if service == nil {
@@ -176,7 +176,7 @@ func UploadFile(bucketName string, fileName string, targetdir string) bool {
 	return false
 }
 
-// Copy one file from one bucket to another bucket. Return true if succeed. ("cp")
+// CopyOneFile copies one file from one bucket to another bucket. Return true if succeed. ("cp")
 func CopyOneFile(sourceBucket string, destBucket string, fileName string) bool {
 	service := CreateService()
 	if service == nil {
@@ -195,7 +195,7 @@ func CopyOneFile(sourceBucket string, destBucket string, fileName string) bool {
 	return true
 }
 
-// Copy all files with PrefixFileName from SourceBucke to DestBucket if there
+// SyncTwoBuckets copies all files with PrefixFileName from SourceBucke to DestBucket if there
 // is no one yet. Return true if succeed.
 func SyncTwoBuckets(sourceBucket string, destBucket string, prefixFileName string) bool {
 	service := CreateService()
@@ -265,7 +265,7 @@ func SyncTwoBuckets(sourceBucket string, destBucket string, prefixFileName strin
 	return true
 }
 
-// Compare whether 2 buckets have exactly same content. Return true if they are the same.
+// CompareBuckets compares whether 2 buckets have exactly same files. Return true if they are the same.
 func CompareBuckets(sourceBucket string, destBucket string) bool {
 	service := CreateService()
 	if service == nil {

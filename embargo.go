@@ -33,7 +33,7 @@ type EmbargoConfig struct {
 //TODO: load whitelits from GCS through public link.
 var WhiteListBucket = "m-lab"
 
-func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) *EmbargoConfig {
+func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) (*EmbargoConfig, error) {
 	nc := &EmbargoConfig{
 		sourceBucket:      sourceBucketName,
 		destPrivateBucket: privateBucketName,
@@ -42,22 +42,23 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 	if whitelistFile == "" {
 		results := nc.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full")
 		if !results {
-			log.Printf("Cannot load whitelist.\n")
+			log.Printf("Cannot load whitelist from GCS.\n")
+			return nil, errors.New("Cannot load whitelist from GCS.")
 		} else {
 			log.Printf("Load whitelist from GCS.\n")
 		}
 	} else {
 		if !nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile) {
 			log.Printf("Cannot load whitelist from local.\n")
-			return nil
+			return nil, errors.New("Cannot load whitelist from local.")
 		}
 	}
 	nc.embargoService = CreateService()
 	if nc.embargoService == nil {
 		log.Printf("Cannot create storage service.\n")
-		return nil
+		return nil, errors.New("Cannot create storage service.")
 	}
-	return nc
+	return nc, nil
 }
 
 // WriteResults writes results to GCS.

@@ -2,6 +2,7 @@ package embargo_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -9,11 +10,21 @@ import (
 	embargo "github.com/m-lab/etl-embargo"
 )
 
+func CleanUp(bucketName string) {
+	if !embargo.DeleteFiles(bucketName, "") {
+		fmt.Printf("Delete file failed, Please delete files in %s before rerunning the test.\n", bucketName)
+	}
+}
+
 func TestEmbargo(t *testing.T) {
 	sourceBucket := "embargo-source-mlab-testing"
 	publicBucket := "embargo-output-mlab-testing"
 	privateBucket := "embargoed-data-mlab-testing"
-	testConfig := embargo.NewEmbargoConfig(sourceBucket, privateBucket, publicBucket, "testdata/whitelist_full")
+	testConfig, err := embargo.NewEmbargoConfig(sourceBucket, privateBucket, publicBucket, "testdata/whitelist_full")
+	if err != nil {
+		t.Error("Cannot create embargo service.\n")
+		return
+	}
 	embargo.DeleteFiles(sourceBucket, "")
 	embargo.UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
 	if testConfig.EmbargoOneDayData("20170315", 20160822) != nil {
@@ -28,10 +39,9 @@ func TestEmbargo(t *testing.T) {
 		t.Error("Did not generate public data correctly.\n")
 	}
 
-	// Cleanup
-	embargo.DeleteFiles(sourceBucket, "")
-	embargo.DeleteFiles(privateBucket, "")
-	embargo.DeleteFiles(publicBucket, "")
+	CleanUp(sourceBucket)
+	CleanUp(privateBucket)
+	CleanUp(publicBucket)
 	return
 }
 
@@ -42,8 +52,11 @@ func TestEmbargo(t *testing.T) {
 // with lists of inner files, call SplitFile on it, then verify that the pub
 // and private buffers contain the correct filenames.
 func TestSplitTarFile(t *testing.T) {
-	testConfig := embargo.NewEmbargoConfig("embargo-source-mlab-testing", "embargoed-data-mlab-testing", "embargo-output-mlab-testing", "testdata/whitelist_full")
-
+	testConfig, err := embargo.NewEmbargoConfig("embargo-source-mlab-testing", "embargoed-data-mlab-testing", "embargo-output-mlab-testing", "testdata/whitelist_full")
+	if err != nil {
+		t.Error("Cannot create embargo service.\n")
+		return
+	}
 	// Load input tar file.
 	file, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz")
 	if err != nil {

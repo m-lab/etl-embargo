@@ -50,15 +50,20 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if fn != "" {
-		testConfig.EmbargoSingleFile(filePath)
-		fmt.Fprint(w, "Done with embargo single file "+fn+" \n")
+		err := testConfig.EmbargoSingleFile(filePath)
+		if err == nil {
+			fmt.Fprint(w, "Done with embargo single file "+fn+" \n")
+		}
 		return
 	}
 
 	// Process the date if there is not single file.
 	if len(date) > 0 {
-		testConfig.EmbargoOneDayData(date[0], embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0)))
-		fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
+		err := testConfig.EmbargoOneDayData(date[0], embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0)))
+		if err == nil {
+			fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
+		}
+		return
 	}
 }
 

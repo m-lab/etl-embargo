@@ -46,13 +46,15 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 
 	testConfig, err := embargo.NewEmbargoConfig(sourceBucket, privateBucket[0], publicBucket[0], "")
 	if err != nil {
-		fmt.Fprint(w, "Cannot create embargo service.\n")
+		log.Print("Cannot create embargo service.\n")
+		http.Error(w, "Cannot create embargo service.", http.StatusInternalServerError)
 		return
 	}
 	if fn != "" {
 		err := testConfig.EmbargoSingleFile(filePath)
-		if err == nil {
-			fmt.Fprint(w, "Done with embargo single file "+fn+" \n")
+		if err != nil {
+			log.Print("Fail with embargo single file " + fn + " \n")
+			http.Error(w, "Fail with embargo single file.", http.StatusInternalServerError)
 		}
 		return
 	}
@@ -60,8 +62,9 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	// Process the date if there is not single file.
 	if len(date) > 0 {
 		err := testConfig.EmbargoOneDayData(date[0], embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0)))
-		if err == nil {
-			fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
+		if err != nil {
+			log.Print("Fail with embargo on new coming data for date: " + date[0] + " \n")
+			http.Error(w, "Fail with embargo on new coming data for date: "+date[0]+" \n", http.StatusInternalServerError)
 		}
 		return
 	}

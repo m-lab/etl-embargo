@@ -10,7 +10,7 @@ import (
 	embargo "github.com/m-lab/etl-embargo"
 )
 
-func CleanUp(bucketName string) {
+func cleanUpBucket(bucketName string) {
 	if !embargo.DeleteFiles(bucketName, "") {
 		fmt.Printf("Delete file failed, Please delete files in %s before rerunning the test.\n", bucketName)
 	}
@@ -39,9 +39,9 @@ func TestEmbargo(t *testing.T) {
 		t.Error("Did not generate public data correctly.\n")
 	}
 
-	CleanUp(sourceBucket)
-	CleanUp(privateBucket)
-	CleanUp(publicBucket)
+	cleanUpBucket(sourceBucket)
+	cleanUpBucket(privateBucket)
+	cleanUpBucket(publicBucket)
 	return
 }
 

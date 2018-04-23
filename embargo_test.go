@@ -2,6 +2,7 @@ package embargo_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -9,36 +10,53 @@ import (
 	embargo "github.com/m-lab/etl-embargo"
 )
 
-// End to end test, requires authentication.
-// TODO: Enable it on Travis.
+func cleanUpBucket(bucketName string) {
+	if !embargo.DeleteFiles(bucketName, "") {
+		fmt.Printf("Delete file failed, Please delete files in %s before rerunning the test.\n", bucketName)
+	}
+}
+
 func TestEmbargo(t *testing.T) {
-	sourceBucket := "sidestream-embargo"
-	testConfig := embargo.NewEmbargoConfig(sourceBucket, "mlab-embargoed-data", "embargo-output", "")
-	embargo.DeleteFiles(sourceBucket, "")
-	embargo.UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
-	if testConfig.EmbargoOneDayData("2017/03/15") != nil {
-		t.Error("Did not perform embargo correctly.\n")
+	sourceBucket := "embargo-source-mlab-testing"
+	publicBucket := "embargo-output-mlab-testing"
+	privateBucket := "embargoed-data-mlab-testing"
+	testConfig, err := embargo.NewEmbargoConfig(sourceBucket, privateBucket, publicBucket, "testdata/whitelist_full")
+	if err != nil {
+		t.Error("Cannot create embargo service.\n")
+		return
 	}
 	embargo.DeleteFiles(sourceBucket, "")
+	embargo.UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
+	if testConfig.EmbargoOneDayData("20170315", 20160822) != nil {
+		t.Error("Did not perform embargo correctly.\n")
+	}
+
+	// Verify that there are expected outputs in the destination buckets.
+	if !embargo.CompareBuckets(privateBucket, "embargoed-golden-data-mlab-testing") {
+		t.Error("Did not generate embargoed data correctly.\n")
+	}
+	if !embargo.CompareBuckets(publicBucket, "embargo-output-golden-mlab-testing") {
+		t.Error("Did not generate public data correctly.\n")
+	}
+
+	cleanUpBucket(sourceBucket)
+	cleanUpBucket(privateBucket)
+	cleanUpBucket(publicBucket)
 	return
 }
 
-func TestGetDayOfWeek(t *testing.T) {
-	dayOfWeek, err := embargo.GetDayOfWeek("sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz")
-	if err != nil || dayOfWeek != "Tuesday" {
-		t.Error("Did not get day of week correctly.\n")
-	}
-}
-
-// This test verifies that func embargoBuf() correctly splits the input tar
+// This test verifies that func SplitFile() correctly splits the input tar
 // file into 2 tar files: one contains the embargoed web100 files, the other
 // contains the files that can be published.
 // TODO: a cleaner way to test this would be to create a tar file on the fly,
 // with lists of inner files, call SplitFile on it, then verify that the pub
 // and private buffers contain the correct filenames.
 func TestSplitTarFile(t *testing.T) {
-	testConfig := embargo.NewEmbargoConfig("sidestream-embargo", "mlab-embargoed-data", "embargo-output", "testdata/whitelist_full")
-
+	testConfig, err := embargo.NewEmbargoConfig("embargo-source-mlab-testing", "embargoed-data-mlab-testing", "embargo-output-mlab-testing", "testdata/whitelist_full")
+	if err != nil {
+		t.Error("Cannot create embargo service.\n")
+		return
+	}
 	// Load input tar file.
 	file, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz")
 	if err != nil {
@@ -46,9 +64,9 @@ func TestSplitTarFile(t *testing.T) {
 	}
 	defer file.Close()
 
-	privateBuf, publicBuf, err := testConfig.SplitFile(file)
+	privateBuf, publicBuf, err := testConfig.SplitFile(file, false)
 	if err != nil {
-		t.Error("Did not perform embargo ocrrectly.\n")
+		t.Error("Did not perform embargo correctly.\n")
 	}
 	publicGolden, err := os.Open("testdata/20170315T000000Z-mlab3-sea03-sidestream-0000-p.tgz")
 	if err != nil {

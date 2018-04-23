@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,9 +30,10 @@ type EmbargoConfig struct {
 	embargoService    *storage.Service
 }
 
+//TODO: load whitelits from GCS through public link.
 var WhiteListBucket = "m-lab"
 
-func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) *EmbargoConfig {
+func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) (*EmbargoConfig, error) {
 	nc := &EmbargoConfig{
 		sourceBucket:      sourceBucketName,
 		destPrivateBucket: privateBucketName,
@@ -40,18 +42,26 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 	if whitelistFile == "" {
 		results := nc.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full")
 		if !results {
-			log.Printf("Cannot load whitelist.\n")
+			log.Printf("Cannot load whitelist from GCS.\n")
+			return nil, errors.New("Cannot load whitelist from GCS.")
 		} else {
 			log.Printf("Load whitelist from GCS.\n")
 		}
 	} else {
-		nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
+		if !nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile) {
+			log.Printf("Cannot load whitelist from local.\n")
+			return nil, errors.New("Cannot load whitelist from local.")
+		}
 	}
 	nc.embargoService = CreateService()
-	return nc
+	if nc.embargoService == nil {
+		log.Printf("Cannot create storage service.\n")
+		return nil, errors.New("Cannot create storage service.")
+	}
+	return nc, nil
 }
 
-// Write results to GCS.
+// WriteResults writes results to GCS.
 func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf bytes.Buffer) error {
 	embargoTarfileName := strings.Replace(tarfileName, ".tgz", "-e.tgz", -1)
 	publicObject := &storage.Object{Name: tarfileName}
@@ -68,8 +78,8 @@ func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf 
 	return nil
 }
 
-// Split one tar files into 2 buffers.
-func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffer, error) {
+// SplitFile splits one tar files into 2 buffers.
+func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
@@ -114,7 +124,22 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 		hdr.ModTime = info.ModTime()
 		hdr.Typeflag = tar.TypeReg
 		output, err := ioutil.ReadAll(tarReader)
-		if ec.embargoCheck.ShouldEmbargo(basename) {
+		if err != nil {
+			log.Printf("cannot read the tar file: %v\n", err)
+			return embargoBuf, publicBuf, err
+		}
+		if moreThanOneYear || ec.embargoCheck.CheckInWhitelist(basename) {
+			// put this file to a public buffer
+			if err := publicTw.WriteHeader(hdr); err != nil {
+				log.Printf("cannot write the public header: %v\n", err)
+				return embargoBuf, publicBuf, err
+			}
+			log.Printf("publish file: %s\n", basename)
+			if _, err := publicTw.Write([]byte(output)); err != nil {
+				log.Printf("cannot write the public content to a buffer: %v\n", err)
+				return embargoBuf, publicBuf, err
+			}
+		} else {
 			// put this file to a private buffer
 			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
@@ -123,17 +148,6 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 			//log.Printf("embargo file: %s\n", basename)
 			if _, err := embargoTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the embargoed content to a buffer: %v\n", err)
-				return embargoBuf, publicBuf, err
-			}
-		} else {
-			// put this file to a public buffer
-			if err := publicTw.WriteHeader(hdr); err != nil {
-				log.Printf("cannot write the public header: %v\n", err)
-				return embargoBuf, publicBuf, err
-			}
-			//log.Printf("publish file: %s\n", basename)
-			if _, err := publicTw.Write([]byte(output)); err != nil {
-				log.Printf("cannot write the public content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
 		}
@@ -158,33 +172,18 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader) (bytes.Buffer, bytes.Buffe
 	return embargoBuf, publicBuf, nil
 }
 
-// EmbargoOneTar process a filepath string like
-// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
-// return "Tuesday" for date "2017/05/16"
-func GetDayOfWeek(filename string) (string, error) {
-	if len(filename) < 21 {
-		return "", errors.New("invalid filename.")
-	}
-	date := filename[11:21]
-	dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
-	parsedDate, err := time.Parse("2006-01-02 15:04:05", dateStr)
-	if err != nil {
-		return "", err
-	}
-	return parsedDate.Weekday().String(), nil
-}
-
 // EmbargoOneTar processes one tar file, splits it to 2 files. The embargoed files
 // will be saved in a private bucket, and the unembargoed part will be save in a
 // public bucket.
 // The private file will have a different name, so it can be copied to public
 // bucket directly when it becomes one year old.
-func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) error {
+// The tarfileName is like 20170516T000000Z-mlab1-atl06-sidestream-0000.tgz
+func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, moreThanOneYear bool) error {
 	dayOfWeek, err := GetDayOfWeek(tarfileName)
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
 	}
-	embargoBuf, publicBuf, err := ec.SplitFile(content)
+	embargoBuf, publicBuf, err := ec.SplitFile(content, moreThanOneYear)
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 		return err
@@ -198,11 +197,12 @@ func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string) er
 	return nil
 }
 
-// Embargo do embargo ckecking to all files in the sourceBucket.
-// The input date is in format yyyy/mm/dd
+// EmbargoOneDayData do embargo for one day files.
+// The input date is string in format yyyymmdd
+// The cutoffDate is integer in format yyyymmdd
 // TODO: handle midway crash. Since the source bucket is unchanged, if it failed
 // in the middle, we just rerun it for that specific day.
-func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
+func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 	f, err := os.OpenFile("EmbargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -220,12 +220,18 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
 	}
 
 	sourceFiles := ec.embargoService.Objects.List(ec.sourceBucket)
-	sourceFiles.Prefix("sidestream/" + date)
+	sourceFiles.Prefix("sidestream/" + date[0:4] + "/" + date[4:6] + "/" + date[6:8])
 	sourceFilesList, err := sourceFiles.Context(context.Background()).Do()
 	if err != nil {
 		log.Printf("Objects List of source bucket failed: %v\n", err)
 		return err
 	}
+	dateInteger, err := strconv.Atoi(date[0:8])
+	if err != nil {
+		log.Printf("Cannot get valid date: %v\n", err)
+		return err
+	}
+	moreThanOneYear := dateInteger < cutoffDate
 	for _, oneItem := range sourceFilesList.Items {
 		//fmt.Printf(oneItem.Name + "\n")
 		if !strings.Contains(oneItem.Name, "tgz") || !strings.Contains(oneItem.Name, "sidestream") {
@@ -237,25 +243,37 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string) error {
 			log.Printf("fail to read a tar file from the bucket: %v\n", err)
 			return err
 		}
-		if err := ec.EmbargoOneTar(fileContent.Body, oneItem.Name); err != nil {
+		if err := ec.EmbargoOneTar(fileContent.Body, oneItem.Name, moreThanOneYear); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	ec.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full")
+	if !ec.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full") {
+		return errors.New("Cannot load whitelist.")
+	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {
 		return errors.New("Not a proper sidestream file.")
 	}
 
 	fileContent, err := ec.embargoService.Objects.Get(ec.sourceBucket, filename).Download()
 	if err != nil {
-		log.Printf("fail to read a tar file from the bucket: %v\n", err)
+		log.Printf("fail to read tar file from the bucket: %v\n", err)
 		return err
 	}
-	if err := ec.EmbargoOneTar(fileContent.Body, filename); err != nil {
+	baseName := filepath.Base(filename)
+	dateInteger, err := strconv.Atoi(baseName[0:8])
+	if err != nil {
+		log.Printf("fail to get valid date from filename: %v\n", err)
+		return err
+	}
+
+	moreThanOneYear := dateInteger < FormatDateAsInt(time.Now().AddDate(-1, 0, 0))
+
+	if err := ec.EmbargoOneTar(fileContent.Body, filename, moreThanOneYear); err != nil {
 		return err
 	}
 	return nil

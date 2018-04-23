@@ -7,13 +7,14 @@ import (
 	// Enable exported debug vars.  See https://golang.org/pkg/expvar/
 	_ "expvar"
 	"strings"
+	"time"
 
 	"github.com/m-lab/etl-embargo"
 	"github.com/m-lab/etl-embargo/metrics"
 	"github.com/m-lab/etl/storage"
 )
 
-// For now, we can handle data for one day or a single file.
+// EmbargoHandler handles data for one day or a single file.
 // TODO(dev): make sure only authorized users can call this.
 // The input URL is like: "hostname:port/submit?date=yyyymmdd&file=gs://scraper-mlab-sandbox/sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz&&publicBucket=archive-mlab-sandbox&&privateBucket=embargo-mlab-sandbox"
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +35,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	fn, err := storage.GetFilename(filename[0])
 	if err != nil {
 		log.Printf("Invalid filename: %s\n", fn)
+		http.Error(w, "Invalid filename: "+fn, http.StatusInternalServerError)
 		return
 	}
 
@@ -43,17 +45,29 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	sourceBucket := removePrefix[0:bucketNameEnd]
 	filePath := removePrefix[bucketNameEnd+1:]
 
-	testConfig := embargo.NewEmbargoConfig(sourceBucket, privateBucket[0], publicBucket[0], "")
+	testConfig, err := embargo.NewEmbargoConfig(sourceBucket, privateBucket[0], publicBucket[0], "")
+	if err != nil {
+		log.Print("Cannot create embargo service.\n")
+		http.Error(w, "Cannot create embargo service.", http.StatusInternalServerError)
+		return
+	}
 	if fn != "" {
-		testConfig.EmbargoSingleFile(filePath)
-		fmt.Fprint(w, "Done with embargo single file "+fn+" \n")
+		err := testConfig.EmbargoSingleFile(filePath)
+		if err != nil {
+			log.Print("Fail with embargo single file " + fn + " \n")
+			http.Error(w, "Fail with embargo single file.", http.StatusInternalServerError)
+		}
 		return
 	}
 
 	// Process the date if there is not single file.
 	if len(date) > 0 {
-		testConfig.EmbargoOneDayData(date[0])
-		fmt.Fprint(w, "Done with embargo on new coming data for date: "+date[0]+" \n")
+		err := testConfig.EmbargoOneDayData(date[0], embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0)))
+		if err != nil {
+			log.Print("Fail with embargo on new coming data for date: " + date[0] + " \n")
+			http.Error(w, "Fail with embargo on new coming data for date: "+date[0]+" \n", http.StatusInternalServerError)
+		}
+		return
 	}
 }
 

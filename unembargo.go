@@ -1,16 +1,3 @@
-/*
-Copyright 2013 Google Inc.
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-	http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 // Implement the umembargo process when the previously embargoed files are more than one year old.
 package embargo
 
@@ -66,17 +53,6 @@ func NewConfig(privateBucketName, publicBucketName string) *config {
 	return nc
 }
 
-// Given the current date, return true if the date is more than oneyear ago.
-// The input date is integer in format yyyymmdd
-func CheckWhetherUnembargo(date int) bool {
-	currentTime := time.Now()
-	cutoffDate := (currentTime.Year()-1)*10000 + int(currentTime.Month())*100 + currentTime.Day()
-	if date < cutoffDate {
-		return true
-	}
-	return false
-}
-
 // Get filenames for given bucket with the given prefix. Use the service
 func GetFileNamesWithPrefix(service *storage_v1.Service, bucketName string, prefixFileName string) (map[string]bool, error) {
 	existingFilenames := make(map[string]bool)
@@ -102,6 +78,8 @@ func GetFileNamesWithPrefix(service *storage_v1.Service, bucketName string, pref
 	return existingFilenames, nil
 }
 
+// UnEmbargoOneDayLegacyFiles unembargos one day data in the sourceBucket,
+// and writes the output to destBucket.
 // The date is used as prefixFileName in format sidestream/yyyy/mm/dd
 func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFileName string) error {
 	unembargoService := CreateService()
@@ -163,12 +141,13 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 	return nil
 }
 
-// The input date is integer in format yyyymmdd
+// Unembargo unembargo the data of the input date in format yyyymmdd.
 // TODO(dev): add more validity check for input date.
 func (nc *config) Unembargo(date int) error {
 	if date <= 20160000 || date > 21000000 {
 		return errors.New("The date is out of range.")
 	}
+
 	f, err := os.OpenFile("UnembargoLogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
@@ -178,7 +157,7 @@ func (nc *config) Unembargo(date int) error {
 
 	log.SetOutput(f)
 
-	if CheckWhetherUnembargo(date) {
+	if date < FormatDateAsInt(time.Now().AddDate(-1, 0, 0)) {
 		dateStr := strconv.Itoa(date)
 		inputDir := "sidestream/" + dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
 		return UnEmbargoOneDayLegacyFiles(nc.privateBucket, nc.publicBucket, inputDir)

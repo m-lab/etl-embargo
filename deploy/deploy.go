@@ -35,6 +35,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	fn, err := storage.GetFilename(filename[0])
 	if err != nil {
 		log.Printf("Invalid filename: %s\n", fn)
+		http.Error(w, "Invalid filename: "+fn, http.StatusInternalServerError)
 		return
 	}
 

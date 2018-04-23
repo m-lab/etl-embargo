@@ -3,8 +3,11 @@ package embargo
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -35,22 +38,60 @@ func FormatDateAsInt(t time.Time) int {
 	return t.Year()*10000 + int(t.Month())*100 + t.Day()
 }
 
-// ReadWhitelistFromGCS loads IP whitelist from cloud storage.
-func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
-	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
-	checkService := CreateService()
-	if checkService == nil {
-		log.Printf("Storage service was not initialized.\n")
+const SITE_IP_URL_TEST = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
+const SITE_IP_URL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
+
+type Site struct {
+	Hostname string `json:"hostname"`
+	Ipv4     string `json:"ipv4"`
+	Ipv6     string `json:"ipv6"`
+}
+
+// ParseJson parses bytes into array of struct.
+func ParseJson(body []byte) (map[string]bool, error) {
+	sites := make([]Site, 0)
+	whiteList := make(map[string]bool)
+	if err := json.Unmarshal(body, &sites); err != nil {
+		log.Printf("Cannot parse site IP json files.")
+		return whiteList, errors.New("Cannot parse site IP json files.")
+	}
+
+	for _, site := range sites {
+		if site.Ipv4 != "" {
+			whiteList[site.Ipv4] = true
+		}
+		if site.Ipv6 != "" {
+			whiteList[site.Ipv6] = true
+		}
+	}
+	return whiteList, nil
+}
+
+// LoadWhitelist load the IP whitelist from GCS.
+func (ec *EmbargoCheck) LoadWhitelist() bool {
+	project := os.Getenv("GCLOUD_PROJECT")
+	log.Printf("Using project: %s\n", project)
+	json_url := SITE_IP_URL_TEST
+	if project == "mlab-oti" {
+		json_url = SITE_IP_URL
+	}
+
+	resp, err := http.Get(json_url)
+	if err != nil {
+		log.Printf("cannot download site IP json file.\n")
 		return false
 	}
-	whiteList := make(map[string]bool)
-	if fileContent, err := checkService.Objects.Get(bucket, path).Download(); err == nil {
-		scanner := bufio.NewScanner(fileContent.Body)
-		for scanner.Scan() {
-			oneLine := strings.TrimSuffix(scanner.Text(), "\n")
-			whiteList[oneLine] = true
-		}
-		ec.Whitelist = whiteList
+	defer resp.Body.Close()
+
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Cannot read site IP json files.\n")
+		return false
+	}
+
+	ec.Whitelist, err = ParseJson(body)
+	if err == nil {
 		return true
 	}
 	return false

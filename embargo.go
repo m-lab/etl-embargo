@@ -30,9 +30,6 @@ type EmbargoConfig struct {
 	embargoService    *storage.Service
 }
 
-//TODO: load whitelits from GCS through public link.
-var WhiteListBucket = "m-lab"
-
 func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) (*EmbargoConfig, error) {
 	nc := &EmbargoConfig{
 		sourceBucket:      sourceBucketName,
@@ -40,12 +37,9 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 		destPublicBucket:  publicBucketName,
 	}
 	if whitelistFile == "" {
-		results := nc.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full")
-		if !results {
+		if !nc.embargoCheck.LoadWhitelist() {
 			log.Printf("Cannot load whitelist from GCS.\n")
 			return nil, errors.New("Cannot load whitelist from GCS.")
-		} else {
-			log.Printf("Load whitelist from GCS.\n")
 		}
 	} else {
 		if !nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile) {
@@ -252,7 +246,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 
 // EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	if !ec.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full") {
+	if !ec.embargoCheck.LoadWhitelist() {
 		return errors.New("Cannot load whitelist.")
 	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {

@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-type EmbargoCheck struct {
-	SiteIPList map[string]bool
+type SiteIPCheck struct {
+	SiteIPList map[string]struct{}
 }
 
 // GetDayOfWeek returns "Tuesday" for date "2017/05/16"
@@ -49,7 +49,7 @@ type Site struct {
 }
 
 // ParseJson parses bytes into array of struct.
-func ParseJson(body []byte) (map[string]bool, error) {
+func IPMapFromJson(body []byte) (map[string]bool, error) {
 	sites := make([]Site, 0)
 	SiteIPList := make(map[string]bool)
 	if err := json.Unmarshal(body, &sites); err != nil {
@@ -72,7 +72,7 @@ func ParseJson(body []byte) (map[string]bool, error) {
 }
 
 // LoadSiteIPJson load the site IP json from public URL.
-func (ec *EmbargoCheck) LoadSiteIPJson() error {
+func (sc *SiteIPCheck) LoadSiteIPJson() error {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("Using project: %s\n", project)
 	json_url := SITE_IP_URL_TEST
@@ -94,23 +94,23 @@ func (ec *EmbargoCheck) LoadSiteIPJson() error {
 		return err
 	}
 
-	ec.SiteIPList, err = ParseJson(body)
+	sc.SiteIPList, err = IPMapFromJson(body)
 	return err
 }
 
 // ReadSiteIPlistFromLocal loads site IP list from a local file.
-func (ec *EmbargoCheck) ReadSiteIPlistFromLocal(path string) error {
+func (ec *SiteIPCheck) ReadSiteIPlistFromLocal(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	siteIPList := make(map[string]bool)
+	siteIPList := make(map[string]struct{})
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		oneLine := strings.TrimSuffix(scanner.Text(), "\n")
-		siteIPList[oneLine] = true
+		siteIPList[oneLine] = {}
 	}
 	ec.SiteIPList = siteIPList
 	return nil
@@ -121,12 +121,13 @@ func (ec *EmbargoCheck) ReadSiteIPlistFromLocal(path string) error {
 // The filename is like: 20170225T23:00:00Z_4.34.58.34_0.web100
 // file with IP that is in the site IP list, return true
 // file with IP not in the site IP list, return false
-func (ec *EmbargoCheck) CheckInSiteIPList(fileName string) bool {
+func (sc *SiteIPCheck) CheckInSiteIPList(fileName string) bool {
 	if !strings.Contains(fileName, "web100") {
 		return true
 	}
 
 	fn := FileName{Name: fileName}
 	localIP := fn.GetLocalIP()
-	return ec.SiteIPList[localIP]
+	_, ok := sc.SiteIPList[localIP]
+        return ok
 }

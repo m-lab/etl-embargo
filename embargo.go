@@ -30,7 +30,7 @@ type EmbargoConfig struct {
 	sourceBucket      string
 	destPrivateBucket string
 	destPublicBucket  string
-	embargoCheck      EmbargoCheck
+	siteIPCheck       SiteIPCheck
 	embargoService    *storage.Service
 }
 
@@ -41,13 +41,13 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, sit
 		destPublicBucket:  publicBucketName,
 	}
 	if siteIPFile == "" {
-		err := nc.embargoCheck.LoadSiteIPJson()
+		err := nc.siteIPCheck.LoadSiteIPJson()
 		if err != nil {
 			log.Printf("Cannot load site IP list from GCS.\n")
 			return nil, err
 		}
 	} else {
-		err := nc.embargoCheck.ReadSiteIPlistFromLocal(siteIPFile)
+		err := nc.siteIPCheck.ReadSiteIPlistFromLocal(siteIPFile)
 		if err != nil {
 			log.Printf("Cannot load site IP file from local.\n")
 			return nil, err
@@ -128,7 +128,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 			log.Printf("cannot read the tar file: %v\n", err)
 			return embargoBuf, publicBuf, err
 		}
-		if moreThanOneYear || ec.embargoCheck.CheckInSiteIPList(basename) {
+		if moreThanOneYear || ec.siteIPCheck.CheckInSiteIPList(basename) {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
@@ -252,7 +252,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 
 // EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	if ec.embargoCheck.LoadSiteIPJson() != nil {
+	if ec.siteIPCheck.LoadSiteIPJson() != nil {
 		return errors.New("Cannot load whitelist.")
 	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {

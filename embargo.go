@@ -1,4 +1,8 @@
-// Embargo implementation.
+// Embargo package perform embargo for all sidestream data. For all data that
+// are more than one year old, or server IP in the list of M-Lab server IP list
+// the sidestream test will be published.
+// Otherwise the test will be embargoed and saved in a private bucket. It will
+// published later when it is more than one year old.
 package embargo
 
 import (
@@ -30,22 +34,22 @@ type EmbargoConfig struct {
 	embargoService    *storage.Service
 }
 
-func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) (*EmbargoConfig, error) {
+func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, siteIPFile string) (*EmbargoConfig, error) {
 	nc := &EmbargoConfig{
 		sourceBucket:      sourceBucketName,
 		destPrivateBucket: privateBucketName,
 		destPublicBucket:  publicBucketName,
 	}
-	if whitelistFile == "" {
+	if siteIPFile == "" {
 		err := nc.embargoCheck.LoadSiteIPJson()
 		if err != nil {
-			log.Printf("Cannot load whitelist from GCS.\n")
+			log.Printf("Cannot load site IP list from GCS.\n")
 			return nil, err
 		}
 	} else {
-		err := nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
+		err := nc.embargoCheck.ReadSiteIPlistFromLocal(siteIPFile)
 		if err != nil {
-			log.Printf("Cannot load whitelist from local.\n")
+			log.Printf("Cannot load site IP file from local.\n")
 			return nil, err
 		}
 	}
@@ -124,7 +128,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 			log.Printf("cannot read the tar file: %v\n", err)
 			return embargoBuf, publicBuf, err
 		}
-		if moreThanOneYear || ec.embargoCheck.CheckInWhitelist(basename) {
+		if moreThanOneYear || ec.embargoCheck.CheckInSiteIPList(basename) {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)

@@ -67,8 +67,8 @@ func ParseJson(body []byte) (map[string]bool, error) {
 	return whiteList, nil
 }
 
-// LoadWhitelist load the IP whitelist from GCS.
-func (ec *EmbargoCheck) LoadWhitelist() bool {
+// LoadWhitelist load the site IP json from GCS.
+func (ec *EmbargoCheck) LoadSiteIPJson() error {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("Using project: %s\n", project)
 	json_url := SITE_IP_URL_TEST
@@ -79,7 +79,7 @@ func (ec *EmbargoCheck) LoadWhitelist() bool {
 	resp, err := http.Get(json_url)
 	if err != nil {
 		log.Printf("cannot download site IP json file.\n")
-		return false
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -87,21 +87,18 @@ func (ec *EmbargoCheck) LoadWhitelist() bool {
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Cannot read site IP json files.\n")
-		return false
+		return err
 	}
 
 	ec.Whitelist, err = ParseJson(body)
-	if err == nil {
-		return true
-	}
-	return false
+	return err
 }
 
 // ReadWhitelistFromLocal loads IP whitelist from a local file.
-func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
+func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
-		return false
+		return err
 	}
 	defer file.Close()
 
@@ -112,7 +109,7 @@ func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
 		whiteList[oneLine] = true
 	}
 	ec.Whitelist = whiteList
-	return true
+	return nil
 }
 
 // CheckInWhitelist checks whether the IP in fileName is in the whitelist.

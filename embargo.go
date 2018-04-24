@@ -37,14 +37,16 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whi
 		destPublicBucket:  publicBucketName,
 	}
 	if whitelistFile == "" {
-		if !nc.embargoCheck.LoadWhitelist() {
+		err := nc.embargoCheck.LoadSiteIPJson()
+		if err != nil {
 			log.Printf("Cannot load whitelist from GCS.\n")
-			return nil, errors.New("Cannot load whitelist from GCS.")
+			return nil, err
 		}
 	} else {
-		if !nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile) {
+		err := nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile)
+		if err != nil {
 			log.Printf("Cannot load whitelist from local.\n")
-			return nil, errors.New("Cannot load whitelist from local.")
+			return nil, err
 		}
 	}
 	nc.embargoService = CreateService()
@@ -246,7 +248,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 
 // EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	if !ec.embargoCheck.LoadWhitelist() {
+	if ec.embargoCheck.LoadSiteIPJson() != nil {
 		return errors.New("Cannot load whitelist.")
 	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {

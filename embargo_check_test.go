@@ -9,10 +9,12 @@ import (
 func TestReadSiteIPlistFromLocal(t *testing.T) {
 	ip_check := new(embargo.SiteIPCheck)
 	ip_check.ReadSiteIPlistFromLocal("testdata/whitelist")
-	if !ip_check.SiteIPList["213.244.128.170"] {
+	_, ok := ip_check.SiteIPList["213.244.128.170"]
+	if !ok{
 		t.Error("missing IP in site IP list: want '213.244.128.170'\n")
 	}
-	if ip_check.SiteIPList["2001:4c08:2003:2::16"] {
+	_, ok = ip_check.SiteIPList["2001:4c08:2003:2::16"]
+	if ok {
 		t.Error("IP 2001:4c08:2003:2::16 should not be in site IP list.\n")
 	}
 	return
@@ -37,7 +39,9 @@ func TestIPMapFromJson(t *testing.T) {
   }
 ]`)
 	siteIPList, err := embargo.IPMapFromJson(body)
-	if err != nil || len(siteIPList) != 2 || !siteIPList["196.49.14.227"] || siteIPList["196.49.14.214"] {
+	_, isin := siteIPList["196.49.14.227"]
+	_, notin := siteIPList["196.49.14.214"]
+	if err != nil || len(siteIPList) != 2 || !isin || notin {
 		t.Error("Do not parse bytes into struct correctly.")
 	}
 }

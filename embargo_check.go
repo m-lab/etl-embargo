@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// SiteIPList is the list of M-Lab site IP EXCEPT the samknows sites.
 type SiteIPCheck struct {
 	SiteIPList map[string]struct{}
 }
@@ -117,15 +118,10 @@ func (ec *SiteIPCheck) ReadSiteIPlistFromLocal(path string) error {
 }
 
 // CheckInSiteIPList checks whether the IP in fileName is in the site IP list.
-// It always returns true for non-web100 files.
 // The filename is like: 20170225T23:00:00Z_4.34.58.34_0.web100
 // file with IP that is in the site IP list, return true
 // file with IP not in the site IP list, return false
-func (sc *SiteIPCheck) CheckInSiteIPList(fileName string) bool {
-	if !strings.Contains(fileName, "web100") {
-		return true
-	}
-
+func (sc *SiteIPCheck) CheckSiteIPListed(fileName string) bool {
 	fn := FileName{Name: fileName}
 	localIP := fn.GetLocalIP()
 	_, ok := sc.SiteIPList[localIP]

@@ -110,7 +110,7 @@ func (ec *SiteIPCheck) ReadSiteIPlistFromLocal(path string) error {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		oneLine := strings.TrimSuffix(scanner.Text(), "\n")
-		siteIPList[oneLine] = {}
+		siteIPList[oneLine] = struct{}{}
 	}
 	ec.SiteIPList = siteIPList
 	return nil

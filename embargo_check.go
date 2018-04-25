@@ -49,9 +49,9 @@ type Site struct {
 }
 
 // ParseJson parses bytes into array of struct.
-func IPMapFromJson(body []byte) (map[string]bool, error) {
+func IPMapFromJson(body []byte) (map[string]struct{}, error) {
 	sites := make([]Site, 0)
-	SiteIPList := make(map[string]bool)
+	SiteIPList := make(map[string]struct{})
 	if err := json.Unmarshal(body, &sites); err != nil {
 		log.Printf("Cannot parse site IP json files.")
 		return SiteIPList, errors.New("Cannot parse site IP json files.")
@@ -62,10 +62,10 @@ func IPMapFromJson(body []byte) (map[string]bool, error) {
 			continue
 		}
 		if site.Ipv4 != "" {
-			SiteIPList[site.Ipv4] = true
+			SiteIPList[site.Ipv4] = struct{}{} 
 		}
 		if site.Ipv6 != "" {
-			SiteIPList[site.Ipv6] = true
+			SiteIPList[site.Ipv6] = struct{}{}
 		}
 	}
 	return SiteIPList, nil

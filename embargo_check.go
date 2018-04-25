@@ -129,5 +129,5 @@ func (sc *SiteIPCheck) CheckInSiteIPList(fileName string) bool {
 	fn := FileName{Name: fileName}
 	localIP := fn.GetLocalIP()
 	_, ok := sc.SiteIPList[localIP]
-        return ok
+	return ok
 }

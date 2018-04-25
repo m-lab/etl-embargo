@@ -54,7 +54,7 @@ func IPMapFromJson(body []byte) (map[string]struct{}, error) {
 	SiteIPList := make(map[string]struct{})
 	if err := json.Unmarshal(body, &sites); err != nil {
 		log.Printf("Cannot parse site IP json files.")
-		return SiteIPList, errors.New("Cannot parse site IP json files.")
+		return nil, errors.New("Cannot parse site IP json files.")
 	}
 
 	for _, site := range sites {

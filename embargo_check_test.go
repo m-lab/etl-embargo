@@ -10,7 +10,7 @@ func TestReadSiteIPlistFromLocal(t *testing.T) {
 	ip_check := new(embargo.SiteIPCheck)
 	ip_check.ReadSiteIPlistFromLocal("testdata/whitelist")
 	_, ok := ip_check.SiteIPList["213.244.128.170"]
-	if !ok{
+	if !ok {
 		t.Error("missing IP in site IP list: want '213.244.128.170'\n")
 	}
 	_, ok = ip_check.SiteIPList["2001:4c08:2003:2::16"]

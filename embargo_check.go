@@ -62,7 +62,7 @@ func IPMapFromJson(body []byte) (map[string]struct{}, error) {
 			continue
 		}
 		if site.Ipv4 != "" {
-			SiteIPList[site.Ipv4] = struct{}{} 
+			SiteIPList[site.Ipv4] = struct{}{}
 		}
 		if site.Ipv6 != "" {
 			SiteIPList[site.Ipv6] = struct{}{}

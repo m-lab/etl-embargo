@@ -128,7 +128,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 			log.Printf("cannot read the tar file: %v\n", err)
 			return embargoBuf, publicBuf, err
 		}
-		if moreThanOneYear || ec.siteIPCheck.CheckInSiteIPList(basename) {
+		if moreThanOneYear || !strings.Contains(basename, "web100") || ec.siteIPCheck.CheckInSiteIPList(basename) {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)

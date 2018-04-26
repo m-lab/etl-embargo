@@ -21,7 +21,8 @@ type SiteIPCheck struct {
 
 // GetDayOfWeek returns "Tuesday" for date "2017/05/16"
 // for input filepath string like
-// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
+// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz"
+// This func is used in calculate monitoring metrics.
 func GetDayOfWeek(filename string) (string, error) {
 	if len(filename) < 21 {
 		return "", errors.New("invalid filename")
@@ -40,8 +41,9 @@ func FormatDateAsInt(t time.Time) int {
 	return t.Year()*10000 + int(t.Month())*100 + t.Day()
 }
 
-// SiteIPURLTest is 
+// SiteIPURLTest is public URL of the test json file for site info.
 const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
+// SiteIPURLTest is public URL of the prod json file for site info.
 const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
 
 type Site struct {
@@ -50,7 +52,7 @@ type Site struct {
 	Ipv6     string `json:"ipv6"`
 }
 
-// ParseJson parses bytes into array of struct.
+// IPMapFromJson parses bytes into array of struct
 func IPMapFromJson(body []byte) (map[string]struct{}, error) {
 	sites := make([]Site, 0)
 	SiteIPList := make(map[string]struct{})

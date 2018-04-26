@@ -1,5 +1,5 @@
-// Implement site IP loading from public URL or local file and check whether an IP is
-// in the site IP list.
+// Package embargo implemented site IP loading from public URL or local file and check whether an IP is
+// in the whitelist which is the list of all sites exceot the samknows sites.
 package embargo
 
 import (
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// SiteIPList is the list of M-Lab site IP EXCEPT the samknows sites.
+// SiteIPCheck is a struct that contains map SiteIPList is the list of M-Lab site IP EXCEPT the samknows sites.
 type SiteIPCheck struct {
 	SiteIPList map[string]struct{}
 }
@@ -24,7 +24,7 @@ type SiteIPCheck struct {
 // "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
 func GetDayOfWeek(filename string) (string, error) {
 	if len(filename) < 21 {
-		return "", errors.New("invalid filename.")
+		return "", errors.New("invalid filename")
 	}
 	date := filename[11:21]
 	dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
@@ -40,8 +40,9 @@ func FormatDateAsInt(t time.Time) int {
 	return t.Year()*10000 + int(t.Month())*100 + t.Day()
 }
 
-const SITE_IP_URL_TEST = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
-const SITE_IP_URL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
+// SiteIPURLTest is 
+const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
+const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
 
 type Site struct {
 	Hostname string `json:"hostname"`
@@ -76,9 +77,9 @@ func IPMapFromJson(body []byte) (map[string]struct{}, error) {
 func (sc *SiteIPCheck) LoadSiteIPJson() error {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("Using project: %s\n", project)
-	json_url := SITE_IP_URL_TEST
+	json_url := SiteIPURLTest
 	if project == "mlab-oti" {
-		json_url = SITE_IP_URL
+		json_url = SiteIPURL
 	}
 
 	resp, err := http.Get(json_url)

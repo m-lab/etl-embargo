@@ -45,9 +45,10 @@ func FormatDateAsInt(t time.Time) int {
 // SiteIPURLTest is public URL of the test json file for site info.
 const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
 
-// SiteIPURLTest is public URL of the prod json file for site info.
+// SiteIPURL is public URL of the prod json file for site info.
 const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
 
+// Site is a struct for parsing json file.
 type Site struct {
 	Hostname string `json:"hostname"`
 	Ipv4     string `json:"ipv4"`
@@ -61,7 +62,7 @@ func FilterSiteIPs(body []byte) (map[string]struct{}, error) {
 	filteredIPList := make(map[string]struct{})
 	if err := json.Unmarshal(body, &sites); err != nil {
 		log.Printf("Cannot parse site IP json files.")
-		return nil, errors.New("Cannot parse site IP json files.")
+		return nil, errors.New("cannot parse site IP json files")
 	}
 
 	for _, site := range sites {
@@ -82,12 +83,12 @@ func FilterSiteIPs(body []byte) (map[string]struct{}, error) {
 func (wc *WhitelistChecker) LoadFromGCS() error {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("Using project: %s\n", project)
-	json_url := SiteIPURLTest
+	jsonURL := SiteIPURLTest
 	if project == "mlab-oti" {
-		json_url = SiteIPURL
+		jsonURL = SiteIPURL
 	}
 
-	resp, err := http.Get(json_url)
+	resp, err := http.Get(jsonURL)
 	if err != nil {
 		log.Printf("cannot download site IP json file.\n")
 		return err

@@ -1,4 +1,4 @@
-// Embargo package perform embargo for all sidestream data. For all data that
+// Package embargo performs embargo for all sidestream data. For all data that
 // are more than one year old, or server IP in the list of M-Lab server IP list
 // the sidestream test will be published.
 // Otherwise the test will be embargoed and saved in a private bucket. It will
@@ -26,6 +26,7 @@ import (
 	"github.com/m-lab/etl-embargo/metrics"
 )
 
+// EmbargoConfig is a struct that performs all embargo procedures.
 type EmbargoConfig struct {
 	sourceBucket      string
 	destPrivateBucket string
@@ -34,6 +35,7 @@ type EmbargoConfig struct {
 	embargoService    *storage.Service
 }
 
+// NewEmbargoConfig creates a new EmbargoConfig and returns it.
 func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, siteIPFile string) (*EmbargoConfig, error) {
 	nc := &EmbargoConfig{
 		sourceBucket:      sourceBucketName,
@@ -56,7 +58,7 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, sit
 	nc.embargoService = CreateService()
 	if nc.embargoService == nil {
 		log.Printf("Cannot create storage service.\n")
-		return nil, errors.New("Cannot create storage service.")
+		return nil, errors.New("cannot create storage service")
 	}
 	return nc, nil
 }
@@ -217,7 +219,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 
 	if ec.embargoService == nil {
 		log.Printf("Storage service was not initialized.\n")
-		return fmt.Errorf("Storage service was not initialized.\n")
+		return fmt.Errorf("storage service was not initialized")
 	}
 
 	sourceFiles := ec.embargoService.Objects.List(ec.sourceBucket)
@@ -254,10 +256,10 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 // EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
 	if ec.whitelistChecker.LoadFromGCS() != nil {
-		return errors.New("Cannot load whitelist.")
+		return errors.New("cannot load whitelist")
 	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {
-		return errors.New("Not a proper sidestream file.")
+		return errors.New("not a proper sidestream file")
 	}
 
 	fileContent, err := ec.embargoService.Objects.Get(ec.sourceBucket, filename).Download()

@@ -1,4 +1,8 @@
-// Embargo implementation.
+// Package embargo performs embargo for all sidestream data. For all data that
+// are more than one year old, or server IP in the list of M-Lab server IP list
+// except the samknow sites, the sidestream test will be published.
+// Otherwise the test will be embargoed and saved in a private bucket. It will
+// published later when it is more than one year old.
 package embargo
 
 import (
@@ -22,41 +26,39 @@ import (
 	"github.com/m-lab/etl-embargo/metrics"
 )
 
+// EmbargoConfig is a struct that performs all embargo procedures.
 type EmbargoConfig struct {
 	sourceBucket      string
 	destPrivateBucket string
 	destPublicBucket  string
-	embargoCheck      EmbargoCheck
+	whitelistChecker  WhitelistChecker
 	embargoService    *storage.Service
 }
 
-//TODO: load whitelits from GCS through public link.
-var WhiteListBucket = "m-lab"
-
-func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, whitelistFile string) (*EmbargoConfig, error) {
+// NewEmbargoConfig creates a new EmbargoConfig and returns it.
+func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, siteIPFile string) (*EmbargoConfig, error) {
 	nc := &EmbargoConfig{
 		sourceBucket:      sourceBucketName,
 		destPrivateBucket: privateBucketName,
 		destPublicBucket:  publicBucketName,
 	}
-	if whitelistFile == "" {
-		results := nc.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full")
-		if !results {
-			log.Printf("Cannot load whitelist from GCS.\n")
-			return nil, errors.New("Cannot load whitelist from GCS.")
-		} else {
-			log.Printf("Load whitelist from GCS.\n")
+	if siteIPFile == "" {
+		err := nc.whitelistChecker.LoadFromGCS()
+		if err != nil {
+			log.Printf("Cannot load site IP list from GCS.\n")
+			return nil, err
 		}
 	} else {
-		if !nc.embargoCheck.ReadWhitelistFromLocal(whitelistFile) {
-			log.Printf("Cannot load whitelist from local.\n")
-			return nil, errors.New("Cannot load whitelist from local.")
+		err := nc.whitelistChecker.LoadFromLocalWhitelist(siteIPFile)
+		if err != nil {
+			log.Printf("Cannot load site IP file from local.\n")
+			return nil, err
 		}
 	}
 	nc.embargoService = CreateService()
 	if nc.embargoService == nil {
 		log.Printf("Cannot create storage service.\n")
-		return nil, errors.New("Cannot create storage service.")
+		return nil, errors.New("cannot create storage service")
 	}
 	return nc, nil
 }
@@ -128,7 +130,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 			log.Printf("cannot read the tar file: %v\n", err)
 			return embargoBuf, publicBuf, err
 		}
-		if moreThanOneYear || ec.embargoCheck.CheckInWhitelist(basename) {
+		if moreThanOneYear || !strings.Contains(basename, "web100") || ec.whitelistChecker.CheckInWhiteList(basename) {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
@@ -179,6 +181,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 // bucket directly when it becomes one year old.
 // The tarfileName is like 20170516T000000Z-mlab1-atl06-sidestream-0000.tgz
 func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, moreThanOneYear bool) error {
+	// dayOfWeek is calculated for prometheus monitoring.
 	dayOfWeek, err := GetDayOfWeek(tarfileName)
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
@@ -216,7 +219,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 
 	if ec.embargoService == nil {
 		log.Printf("Storage service was not initialized.\n")
-		return fmt.Errorf("Storage service was not initialized.\n")
+		return fmt.Errorf("storage service was not initialized")
 	}
 
 	sourceFiles := ec.embargoService.Objects.List(ec.sourceBucket)
@@ -252,11 +255,11 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 
 // EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	if !ec.embargoCheck.ReadWhitelistFromGCS(WhiteListBucket, "whitelist_full") {
-		return errors.New("Cannot load whitelist.")
+	if ec.whitelistChecker.LoadFromGCS() != nil {
+		return errors.New("cannot load whitelist")
 	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {
-		return errors.New("Not a proper sidestream file.")
+		return errors.New("not a proper sidestream file")
 	}
 
 	fileContent, err := ec.embargoService.Objects.Get(ec.sourceBucket, filename).Download()

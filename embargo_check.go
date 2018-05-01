@@ -1,25 +1,32 @@
-// Implement whitelist loading and embargo check based on filename.
+// Package embargo implemented site IP loading from public URL or local file and check whether an IP is
+// in the whitelist which is the list of all sites exceot the samknows sites.
 package embargo
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 )
 
-type EmbargoCheck struct {
-	Whitelist map[string]bool
+// WhitelistChecker is a struct containing map EmbargoWhiteList which is the list
+// of M-Lab site IP EXCEPT the Samknows sites.
+type WhitelistChecker struct {
+	EmbargoWhiteList map[string]struct{}
 }
 
 // GetDayOfWeek returns "Tuesday" for date "2017/05/16"
 // for input filepath string like
-// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz",
+// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz"
+// This func is used in calculate monitoring metrics.
 func GetDayOfWeek(filename string) (string, error) {
 	if len(filename) < 21 {
-		return "", errors.New("invalid filename.")
+		return "", errors.New("invalid filename")
 	}
 	date := filename[11:21]
 	dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
@@ -35,56 +42,98 @@ func FormatDateAsInt(t time.Time) int {
 	return t.Year()*10000 + int(t.Month())*100 + t.Day()
 }
 
-// ReadWhitelistFromGCS loads IP whitelist from cloud storage.
-func (ec *EmbargoCheck) ReadWhitelistFromGCS(bucket string, path string) bool {
-	// TODO: Create service in a Singleton object, and reuse them for all GCS requests.
-	checkService := CreateService()
-	if checkService == nil {
-		log.Printf("Storage service was not initialized.\n")
-		return false
-	}
-	whiteList := make(map[string]bool)
-	if fileContent, err := checkService.Objects.Get(bucket, path).Download(); err == nil {
-		scanner := bufio.NewScanner(fileContent.Body)
-		for scanner.Scan() {
-			oneLine := strings.TrimSuffix(scanner.Text(), "\n")
-			whiteList[oneLine] = true
-		}
-		ec.Whitelist = whiteList
-		return true
-	}
-	return false
+// SiteIPURLTest is public URL of the test json file for site info.
+const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
+
+// SiteIPURL is public URL of the prod json file for site info.
+const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
+
+// Site is a struct for parsing json file.
+type Site struct {
+	Hostname string `json:"hostname"`
+	Ipv4     string `json:"ipv4"`
+	Ipv6     string `json:"ipv6"`
 }
 
-// ReadWhitelistFromLocal loads IP whitelist from a local file.
-func (ec *EmbargoCheck) ReadWhitelistFromLocal(path string) bool {
+// FilterSiteIPs parses bytes and returns array of struct with site IPs
+// filtering out all samknows sites.
+// TODO: make the filter use positive checks, including the list of things
+// other than samknows, rather than excluding samknows.
+func FilterSiteIPs(body []byte) (map[string]struct{}, error) {
+	sites := make([]Site, 0)
+	filteredIPList := make(map[string]struct{})
+	if err := json.Unmarshal(body, &sites); err != nil {
+		log.Printf("Cannot parse site IP json files.")
+		return nil, errors.New("cannot parse site IP json files")
+	}
+
+	for _, site := range sites {
+		if strings.Contains(site.Hostname, "samknows") {
+			continue
+		}
+		if site.Ipv4 != "" {
+			filteredIPList[site.Ipv4] = struct{}{}
+		}
+		if site.Ipv6 != "" {
+			filteredIPList[site.Ipv6] = struct{}{}
+		}
+	}
+	return filteredIPList, nil
+}
+
+// LoadFromGCS loads the embargo IP whitelist from public URL.
+// TODO: add unittest for this func.
+func (wc *WhitelistChecker) LoadFromGCS() error {
+	project := os.Getenv("GCLOUD_PROJECT")
+	log.Printf("Using project: %s\n", project)
+	jsonURL := SiteIPURLTest
+	if project == "mlab-oti" {
+		jsonURL = SiteIPURL
+	}
+
+	resp, err := http.Get(jsonURL)
+	if err != nil {
+		log.Printf("cannot download site IP json file.\n")
+		return err
+	}
+	defer resp.Body.Close()
+
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Cannot read site IP json files.\n")
+		return err
+	}
+
+	wc.EmbargoWhiteList, err = FilterSiteIPs(body)
+	return err
+}
+
+// LoadFromLocalWhitelist loads embargo IP whitelist from a local file.
+func (wc *WhitelistChecker) LoadFromLocalWhitelist(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
-		return false
+		return err
 	}
 	defer file.Close()
 
-	whiteList := make(map[string]bool)
+	whiteList := make(map[string]struct{})
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		oneLine := strings.TrimSuffix(scanner.Text(), "\n")
-		whiteList[oneLine] = true
+		whiteList[oneLine] = struct{}{}
 	}
-	ec.Whitelist = whiteList
-	return true
+	wc.EmbargoWhiteList = whiteList
+	return nil
 }
 
-// CheckInWhitelist checks whether the IP in fileName is in the whitelist.
-// It always returns true for non-web100 files.
+// CheckInWhiteList checks whether the IP in fileName is in the embargo whitelist.
 // The filename is like: 20170225T23:00:00Z_4.34.58.34_0.web100
-// file with IP that is in the IP whitelist, return true
-// file with IP not in the whitelist, return false
-func (ec *EmbargoCheck) CheckInWhitelist(fileName string) bool {
-	if !strings.Contains(fileName, "web100") {
-		return true
-	}
-
+// file with IP that is in the site IP list, return true
+// file with IP not in the site IP list, return false
+func (wc *WhitelistChecker) CheckInWhiteList(fileName string) bool {
 	fn := FileName{Name: fileName}
 	localIP := fn.GetLocalIP()
-	return ec.Whitelist[localIP]
+	_, ok := wc.EmbargoWhiteList[localIP]
+	return ok
 }

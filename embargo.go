@@ -30,7 +30,7 @@ type EmbargoConfig struct {
 	sourceBucket      string
 	destPrivateBucket string
 	destPublicBucket  string
-	siteIPCheck       SiteIPCheck
+	whitelistChecker  WhitelistChecker
 	embargoService    *storage.Service
 }
 
@@ -41,13 +41,13 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, sit
 		destPublicBucket:  publicBucketName,
 	}
 	if siteIPFile == "" {
-		err := nc.siteIPCheck.LoadSiteIPJson()
+		err := nc.whitelistChecker.LoadFromGCS()
 		if err != nil {
 			log.Printf("Cannot load site IP list from GCS.\n")
 			return nil, err
 		}
 	} else {
-		err := nc.siteIPCheck.ReadSiteIPlistFromLocal(siteIPFile)
+		err := nc.whitelistChecker.LoadFromLocalWhitelist(siteIPFile)
 		if err != nil {
 			log.Printf("Cannot load site IP file from local.\n")
 			return nil, err
@@ -128,7 +128,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 			log.Printf("cannot read the tar file: %v\n", err)
 			return embargoBuf, publicBuf, err
 		}
-		if moreThanOneYear || !strings.Contains(basename, "web100") || ec.siteIPCheck.CheckInSiteIPList(basename) {
+		if moreThanOneYear || !strings.Contains(basename, "web100") || ec.whitelistChecker.CheckInWhiteList(basename) {
 			// put this file to a public buffer
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
@@ -179,6 +179,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 // bucket directly when it becomes one year old.
 // The tarfileName is like 20170516T000000Z-mlab1-atl06-sidestream-0000.tgz
 func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, moreThanOneYear bool) error {
+	// dayOfWeek is calculated for prometheus monitoring.
 	dayOfWeek, err := GetDayOfWeek(tarfileName)
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
@@ -252,7 +253,7 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 
 // EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	if ec.siteIPCheck.LoadSiteIPJson() != nil {
+	if ec.whitelistChecker.LoadFromGCS() != nil {
 		return errors.New("Cannot load whitelist.")
 	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {

@@ -14,9 +14,10 @@ import (
 	"time"
 )
 
-// SiteIPCheck is a struct that contains map SiteIPList is the list of M-Lab site IP EXCEPT the samknows sites.
-type SiteIPCheck struct {
-	SiteIPList map[string]struct{}
+// WhitelistChecker is a struct containing map EmbargoWhiteList which is the list
+// of M-Lab site IP EXCEPT the Samknows sites.
+type WhitelistChecker struct {
+	EmbargoWhiteList map[string]struct{}
 }
 
 // GetDayOfWeek returns "Tuesday" for date "2017/05/16"
@@ -53,10 +54,11 @@ type Site struct {
 	Ipv6     string `json:"ipv6"`
 }
 
-// IPMapFromJson parses bytes into array of struct
-func IPMapFromJson(body []byte) (map[string]struct{}, error) {
+// FilterSiteIPs parses bytes and returns array of struct with site IPs
+// filtering out all samknows sites.
+func FilterSiteIPs(body []byte) (map[string]struct{}, error) {
 	sites := make([]Site, 0)
-	SiteIPList := make(map[string]struct{})
+	filteredIPList := make(map[string]struct{})
 	if err := json.Unmarshal(body, &sites); err != nil {
 		log.Printf("Cannot parse site IP json files.")
 		return nil, errors.New("Cannot parse site IP json files.")
@@ -67,17 +69,17 @@ func IPMapFromJson(body []byte) (map[string]struct{}, error) {
 			continue
 		}
 		if site.Ipv4 != "" {
-			SiteIPList[site.Ipv4] = struct{}{}
+			filteredIPList[site.Ipv4] = struct{}{}
 		}
 		if site.Ipv6 != "" {
-			SiteIPList[site.Ipv6] = struct{}{}
+			filteredIPList[site.Ipv6] = struct{}{}
 		}
 	}
-	return SiteIPList, nil
+	return filteredIPList, nil
 }
 
-// LoadSiteIPJson load the site IP json from public URL.
-func (sc *SiteIPCheck) LoadSiteIPJson() error {
+// LoadFromGCS loads the embargo IP whitelist from public URL.
+func (wc *WhitelistChecker) LoadFromGCS() error {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("Using project: %s\n", project)
 	json_url := SiteIPURLTest
@@ -99,35 +101,35 @@ func (sc *SiteIPCheck) LoadSiteIPJson() error {
 		return err
 	}
 
-	sc.SiteIPList, err = IPMapFromJson(body)
+	wc.EmbargoWhiteList, err = FilterSiteIPs(body)
 	return err
 }
 
-// ReadSiteIPlistFromLocal loads site IP list from a local file.
-func (ec *SiteIPCheck) ReadSiteIPlistFromLocal(path string) error {
+// LoadFromLocalWhitelist loads embargo IP whitelist from a local file.
+func (wc *WhitelistChecker) LoadFromLocalWhitelist(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	siteIPList := make(map[string]struct{})
+	whiteList := make(map[string]struct{})
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		oneLine := strings.TrimSuffix(scanner.Text(), "\n")
-		siteIPList[oneLine] = struct{}{}
+		whiteList[oneLine] = struct{}{}
 	}
-	ec.SiteIPList = siteIPList
+	wc.EmbargoWhiteList = whiteList
 	return nil
 }
 
-// CheckInSiteIPList checks whether the IP in fileName is in the site IP list.
+// CheckInWhiteList checks whether the IP in fileName is in the embargo whitelist.
 // The filename is like: 20170225T23:00:00Z_4.34.58.34_0.web100
 // file with IP that is in the site IP list, return true
 // file with IP not in the site IP list, return false
-func (sc *SiteIPCheck) CheckInSiteIPList(fileName string) bool {
+func (wc *WhitelistChecker) CheckInWhiteList(fileName string) bool {
 	fn := FileName{Name: fileName}
 	localIP := fn.GetLocalIP()
-	_, ok := sc.SiteIPList[localIP]
+	_, ok := wc.EmbargoWhiteList[localIP]
 	return ok
 }

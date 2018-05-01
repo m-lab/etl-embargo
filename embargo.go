@@ -1,6 +1,6 @@
 // Package embargo performs embargo for all sidestream data. For all data that
 // are more than one year old, or server IP in the list of M-Lab server IP list
-// the sidestream test will be published.
+// except the samknow sites, the sidestream test will be published.
 // Otherwise the test will be embargoed and saved in a private bucket. It will
 // published later when it is more than one year old.
 package embargo

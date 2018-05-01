@@ -57,6 +57,8 @@ type Site struct {
 
 // FilterSiteIPs parses bytes and returns array of struct with site IPs
 // filtering out all samknows sites.
+// TODO: make the filter use positive checks, including the list of things
+// other than samknows, rather than excluding samknows.
 func FilterSiteIPs(body []byte) (map[string]struct{}, error) {
 	sites := make([]Site, 0)
 	filteredIPList := make(map[string]struct{})
@@ -80,6 +82,7 @@ func FilterSiteIPs(body []byte) (map[string]struct{}, error) {
 }
 
 // LoadFromGCS loads the embargo IP whitelist from public URL.
+// TODO: add unittest for this func.
 func (wc *WhitelistChecker) LoadFromGCS() error {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("Using project: %s\n", project)

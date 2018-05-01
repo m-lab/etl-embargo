@@ -6,7 +6,7 @@ import (
 	"github.com/m-lab/etl-embargo"
 )
 
-func TestReadSiteIPlistFromLocal(t *testing.T) {
+func TestLoadFromLocalWhitelist(t *testing.T) {
 	ipChecker := new(embargo.WhitelistChecker)
 	ipChecker.LoadFromLocalWhitelist("testdata/whitelist")
 	_, ok := ipChecker.EmbargoWhiteList["213.244.128.170"]

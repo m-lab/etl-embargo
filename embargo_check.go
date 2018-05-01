@@ -43,6 +43,7 @@ func FormatDateAsInt(t time.Time) int {
 
 // SiteIPURLTest is public URL of the test json file for site info.
 const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
+
 // SiteIPURLTest is public URL of the prod json file for site info.
 const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
 

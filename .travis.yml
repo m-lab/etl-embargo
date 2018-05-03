@@ -70,7 +70,7 @@ deploy:
   script:
     $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_sandbox
     && $TRAVIS_BUILD_DIR/travis/deploy_app.sh mlab-sandbox
-    SERVICE_ACCOUNT_mlab_sandbox $TRAVIS_BUILD_DIR/deploy/deploy app.yaml
+    SERVICE_ACCOUNT_mlab_sandbox $TRAVIS_BUILD_DIR/deploy app.yaml
   skip_cleanup: true
   on:
     repo: m-lab/etl-embargo

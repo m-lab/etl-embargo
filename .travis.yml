@@ -36,6 +36,7 @@ script:
 # Clean build and prepare for deployment
 - cd $TRAVIS_BUILD_DIR/deploy && go build
 - $TRAVIS_BUILD_DIR/travis/install_gcloud.sh
+- go get google.golang.org/appengine
 
 #################################################################################
 # Deployment Section

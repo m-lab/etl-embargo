@@ -77,3 +77,37 @@ deploy:
     repo: m-lab/etl-embargo
     all_branches: true
     condition: $TRAVIS_BRANCH == sandbox-*
+
+######################################################################
+#  Staging deployments
+#  Auto deployed on merge with master branch
+######################################################################
+- provider: script
+  script:
+    $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_staging
+    && $TRAVIS_BUILD_DIR/travis/deploy_app.sh mlab-staging
+    SERVICE_ACCOUNT_mlab_staging $TRAVIS_BUILD_DIR/deploy app.yaml
+  skip_cleanup: true
+  on:
+    repo: m-lab/etl-embargo
+    branch: master
+
+######################################################################
+#  Prod deployments
+#  Deployed on manual tagging with prod-*, or (group)-prod-*
+#  Should be used AFTER code review, commit to master, and staging soak.
+#  Triggers when *ANY* branch is tagged with prod-*'
+######################################################################
+
+- provider: script
+  script:
+    $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_oti
+    && INJECTED_BUCKET=measurement-lab
+    $TRAVIS_BUILD_DIR/travis/deploy_app.sh mlab-oti
+    SERVICE_ACCOUNT_mlab_oti $TRAVIS_BUILD_DIR/deploy app.yaml
+  skip_cleanup: true
+  on:
+    repo: m-lab/etl-embargo
+    all_branches: true
+    condition: $TRAVIS_TAG == prod-*
+

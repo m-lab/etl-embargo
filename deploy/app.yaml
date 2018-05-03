@@ -17,3 +17,6 @@ network:
   forwarded_ports:
     - 9090/tcp
 
+env_variables:
+  # These should be substituted in the travis deployment script.
+  RELEASE_TAG: ${TRAVIS_TAG}

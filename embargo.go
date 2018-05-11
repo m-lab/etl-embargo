@@ -14,6 +14,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -35,32 +36,57 @@ type EmbargoConfig struct {
 	embargoService    *storage.Service
 }
 
+var EmbargoSingleton *EmbargoConfig
+
+func init() {
+	EmbargoSingleton = nil
+}
+
+// Update the site IP files every 10 minutes.
+func UpdateSiteIP(w http.ResponseWriter, r *http.Request) {
+	if EmbargoSingleton == nil {
+		http.Error(w, "need to create an embargo config first to update site IPs", http.StatusInternalServerError)
+		return
+	}
+	err := EmbargoSingleton.whitelistChecker.LoadFromGCS()
+	if err != nil {
+		log.Printf("Cannot load site IP list from GCS.\n")
+		http.Error(w, "cannot load site IP list from GCS", http.StatusInternalServerError)
+	}
+	return
+}
+
 // NewEmbargoConfig creates a new EmbargoConfig and returns it.
 func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, siteIPFile string) (*EmbargoConfig, error) {
-	nc := &EmbargoConfig{
+	if EmbargoSingleton != nil {
+		return EmbargoSingleton, nil
+	}
+
+	ec := &EmbargoConfig{
 		sourceBucket:      sourceBucketName,
 		destPrivateBucket: privateBucketName,
 		destPublicBucket:  publicBucketName,
 	}
 	if siteIPFile == "" {
-		err := nc.whitelistChecker.LoadFromGCS()
+		err := ec.whitelistChecker.LoadFromGCS()
 		if err != nil {
 			log.Printf("Cannot load site IP list from GCS.\n")
 			return nil, err
 		}
 	} else {
-		err := nc.whitelistChecker.LoadFromLocalWhitelist(siteIPFile)
+		err := ec.whitelistChecker.LoadFromLocalWhitelist(siteIPFile)
 		if err != nil {
 			log.Printf("Cannot load site IP file from local.\n")
 			return nil, err
 		}
 	}
-	nc.embargoService = CreateService()
-	if nc.embargoService == nil {
+	ec.embargoService = CreateService()
+	if ec.embargoService == nil {
 		log.Printf("Cannot create storage service.\n")
 		return nil, errors.New("cannot create storage service")
 	}
-	return nc, nil
+	EmbargoSingleton = ec
+	return ec, nil
 }
 
 // WriteResults writes results to GCS.

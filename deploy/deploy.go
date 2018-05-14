@@ -18,7 +18,7 @@ import (
 // TODO(dev): make sure only authorized users can call this.
 // For example, if we want to process embargo on
 // gs://scraper-mlab-sandbox/sidestream/2017/05/29/20170529T000000Z-mlab1-atl02-sidestream-0000.tgz
-// The input URL is like: "hostname:port/submit?file=Z3M6Ly9zY3JhcGVyLW1sYWItc2FuZGJveC9zaWRlc3RyZWFtLzIwMTcvMDUvMjkvMjAxNzA1MjlUMDAwMDAwWi1tbGFiMS1hdGwwMi1zaWRlc3RyZWFtLTAwMDAudGd6&&publicBucket=archive-mlab-sandbox&&privateBucket=embargo-mlab-sandbox"
+// The input URL is like: "https://embargo-dot-mlab-sandbox.appspot.com/submit?file=Z3M6Ly9zY3JhcGVyLW1sYWItc2FuZGJveC9zaWRlc3RyZWFtLzIwMTcvMDUvMjkvMjAxNzA1MjlUMDAwMDAwWi1tbGFiMS1hdGwwMi1zaWRlc3RyZWFtLTAwMDAudGd6&&publicBucket=archive-mlab-sandbox&&privateBucket=embargo-mlab-sandbox"
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query()["date"]
 	filename := r.URL.Query()["file"]
@@ -68,7 +68,9 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Print("Fail with embargo on new coming data for date: " + date[0] + " \n")
 			http.Error(w, "Fail with embargo on new coming data for date: "+date[0]+" \n", http.StatusInternalServerError)
+			return
 		}
+		fmt.Fprint(w, "success with mebargo one file")
 		return
 	}
 }
@@ -79,7 +81,7 @@ func updateSiteIP(w http.ResponseWriter, r *http.Request) {
 
 	err := embargo.Update()
 	if err != nil {
-		log.Printf("Cannot load site IP list from GCS.\n")
+		fmt.Fprint(w, err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	return

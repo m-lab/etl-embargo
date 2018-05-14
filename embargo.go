@@ -76,10 +76,12 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, sit
 
 func Update() error {
 	if EmbargoSingleton == nil {
+		log.Printf("need to create an embargo config first to update site IPs")
 		return errors.New("need to create an embargo config first to update site IPs")
 	}
 	err := EmbargoSingleton.whitelistChecker.LoadFromGCS()
 	if err != nil {
+		log.Printf("cannot load site IP list from GCS")
 		return errors.New("cannot load site IP list from GCS")
 	}
 	return nil

@@ -90,7 +90,7 @@ func (wc *WhitelistChecker) LoadFromGCS() error {
 	if project == "mlab-oti" {
 		jsonURL = SiteIPURL
 	}
-
+	log.Printf("json file used: %s", jsonURL)
 	resp, err := http.Get(jsonURL)
 	if err != nil {
 		log.Printf("cannot download site IP json file.\n")

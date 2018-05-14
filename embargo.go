@@ -160,7 +160,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 				log.Printf("cannot write the public header: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
-			log.Printf("publish file: %s\n", basename)
+			//log.Printf("publish file: %s\n", basename)
 			if _, err := publicTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the public content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err

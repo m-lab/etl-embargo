@@ -41,7 +41,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("filename: %s\n", fn)
+	//log.Printf("filename: %s\n", fn)
 	removePrefix := fn[5:]
 	bucketNameEnd := strings.IndexByte(removePrefix, '/')
 	sourceBucket := removePrefix[0:bucketNameEnd]

@@ -14,7 +14,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -40,20 +39,6 @@ var EmbargoSingleton *EmbargoConfig
 
 func init() {
 	EmbargoSingleton = nil
-}
-
-// Update the site IP files every 10 minutes.
-func UpdateSiteIP(w http.ResponseWriter, r *http.Request) {
-	if EmbargoSingleton == nil {
-		http.Error(w, "need to create an embargo config first to update site IPs", http.StatusInternalServerError)
-		return
-	}
-	err := EmbargoSingleton.whitelistChecker.LoadFromGCS()
-	if err != nil {
-		log.Printf("Cannot load site IP list from GCS.\n")
-		http.Error(w, "cannot load site IP list from GCS", http.StatusInternalServerError)
-	}
-	return
 }
 
 // NewEmbargoConfig creates a new EmbargoConfig and returns it.
@@ -87,6 +72,17 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, sit
 	}
 	EmbargoSingleton = ec
 	return ec, nil
+}
+
+func Update() error {
+	if EmbargoSingleton == nil {
+		return errors.New("need to create an embargo config first to update site IPs")
+	}
+	err := EmbargoSingleton.whitelistChecker.LoadFromGCS()
+	if err != nil {
+		return errors.New("cannot load site IP list from GCS")
+	}
+	return nil
 }
 
 // WriteResults writes results to GCS.

@@ -16,7 +16,7 @@ import (
 
 // EmbargoHandler handles data for one day or a single file.
 // TODO(dev): make sure only authorized users can call this.
-// For example, if we want to process embargo on 
+// For example, if we want to process embargo on
 // gs://scraper-mlab-sandbox/sidestream/2017/05/29/20170529T000000Z-mlab1-atl02-sidestream-0000.tgz
 // The input URL is like: "hostname:port/submit?file=Z3M6Ly9zY3JhcGVyLW1sYWItc2FuZGJveC9zaWRlc3RyZWFtLzIwMTcvMDUvMjkvMjAxNzA1MjlUMDAwMDAwWi1tbGFiMS1hdGwwMi1zaWRlc3RyZWFtLTAwMDAudGd6&&publicBucket=archive-mlab-sandbox&&privateBucket=embargo-mlab-sandbox"
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +73,18 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Update the site IP files every 10 minutes.
+func updateSiteIP(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Update the site IPs used for embargo process.\n")
+
+	err := embargo.Update()
+	if err != nil {
+		log.Printf("Cannot load site IP list from GCS.\n")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	return
+}
+
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "ok")
 }
@@ -80,7 +92,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
-	http.HandleFunc("/cron/check_siteip", embargo.UpdateSiteIP)
+	http.HandleFunc("/cron/check_siteip", updateSiteIP)
 	metrics.SetupPrometheus()
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

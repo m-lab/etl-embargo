@@ -75,7 +75,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Update the site IP files every 10 minutes.
+// Update the site IP files every day.
 func updateSiteIP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Update the site IPs used for embargo process.\n")
 

@@ -1,4 +1,4 @@
 cron:
 - description: Load site
   url: /cron/check_siteip
-  schedule: every 10 minutes
+  schedule: every day 03:00

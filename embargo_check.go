@@ -78,6 +78,7 @@ func FilterSiteIPs(body []byte) (map[string]struct{}, error) {
 			filteredIPList[site.Ipv6] = struct{}{}
 		}
 	}
+	log.Printf("Load whitelist with length %d", len(filteredIPList))
 	return filteredIPList, nil
 }
 

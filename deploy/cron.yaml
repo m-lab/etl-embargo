@@ -1,4 +1,4 @@
 cron:
-- description: Load site
+- description: Update the embargo whitelist by reloading the site IPs daily at 3:00 UTC
   url: /cron/check_siteip
   schedule: every day 03:00

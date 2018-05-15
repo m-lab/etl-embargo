@@ -42,7 +42,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 
 	testConfig, err := embargo.GetEmbargoConfig("")
 	if err != nil {
-                log.Print(err.Error())
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

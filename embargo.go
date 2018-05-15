@@ -38,20 +38,12 @@ type EmbargoConfig struct {
 // EmbargoSingleton is the singleton object that is the pointer of the EmbargoConfig object.
 var EmbargoSingleton *EmbargoConfig
 
-// SiteIPURLTest is public URL of the json file for site info for mlab-sandbox project.
-const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-sandbox/metadata/v0/current/mlab-host-ips.json"
-
-// SiteIPURLStaging is public URL of the json file for site info for mlab-staging project.
-const SiteIPURLStaging = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
-
-// SiteIPURL is public URL of the prod json file for site info.
-const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
-
+// ProjectToURL is a map from project name to the corresponding public URL for the mlab site IP json file.
 var ProjectToURL = map[string]string{
-	"mlab-sandbox": SiteIPURLTest,
-	"mlab-testing": SiteIPURLTest,
-	"mlab-staging": SiteIPURLStaging,
-	"mlab-oti":     SiteIPURL,
+	"mlab-sandbox": "https://storage.googleapis.com/operator-mlab-sandbox/metadata/v0/current/mlab-host-ips.json",
+	"mlab-testing": "https://storage.googleapis.com/operator-mlab-sandbox/metadata/v0/current/mlab-host-ips.json",
+	"mlab-staging": "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json",
+	"mlab-oti":     "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json",
 }
 
 func init() {
@@ -181,7 +173,6 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 				log.Printf("cannot write the public header: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
-			//log.Printf("publish file: %s\n", basename)
 			if _, err := publicTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the public content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err
@@ -192,7 +183,6 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 				log.Printf("cannot write the embargoed header: %v\n", err)
 				return embargoBuf, publicBuf, err
 			}
-			//log.Printf("embargo file: %s\n", basename)
 			if _, err := embargoTw.Write([]byte(output)); err != nil {
 				log.Printf("cannot write the embargoed content to a buffer: %v\n", err)
 				return embargoBuf, publicBuf, err
@@ -281,7 +271,6 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 	}
 	moreThanOneYear := dateInteger < cutoffDate
 	for _, oneItem := range sourceFilesList.Items {
-		//fmt.Printf(oneItem.Name + "\n")
 		if !strings.Contains(oneItem.Name, "tgz") || !strings.Contains(oneItem.Name, "sidestream") {
 			continue
 		}

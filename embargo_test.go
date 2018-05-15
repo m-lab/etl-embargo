@@ -19,7 +19,7 @@ func cleanUpBucket(bucketName string) {
 func TestEmbargo(t *testing.T) {
 	testConfig, err := embargo.GetEmbargoConfig("testdata/whitelist_full")
 	if err != nil {
-		t.Error("Cannot create embargo service.\n")
+		t.Error(err.Error())
 		return
 	}
 	sourceBucket := "scraper-mlab-testing"
@@ -39,9 +39,9 @@ func TestEmbargo(t *testing.T) {
 		t.Error("Did not generate public data correctly.\n")
 	}
 
-	cleanUpBucket(sourceBucket)
-	cleanUpBucket(privateBucket)
-	cleanUpBucket(publicBucket)
+	//cleanUpBucket(sourceBucket)
+	//cleanUpBucket(privateBucket)
+	//cleanUpBucket(publicBucket)
 	return
 }
 
@@ -54,7 +54,7 @@ func TestEmbargo(t *testing.T) {
 func TestSplitTarFile(t *testing.T) {
 	testConfig, err := embargo.GetEmbargoConfig("testdata/whitelist_full")
 	if err != nil {
-		t.Error("Cannot create embargo service.\n")
+		t.Error(err.Error())
 		return
 	}
 	// Load input tar file.

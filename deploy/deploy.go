@@ -63,18 +63,18 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Fail with embargo on new coming data for date: "+date[0]+" \n", http.StatusInternalServerError)
 			return
 		}
-		fmt.Fprint(w, "success with mebargo one file")
+		log.Print("success with mebargo one file")
 		return
 	}
 }
 
-// Update the site IP files every day.
-func updateSiteIP(w http.ResponseWriter, r *http.Request) {
+// Update the embargo whitelist by reloading the site IPs daily
+func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Update the site IPs used for embargo process.\n")
 
 	err := embargo.UpdateWhitelist()
 	if err != nil {
-		fmt.Fprint(w, err.Error())
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	return
@@ -87,7 +87,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
-	http.HandleFunc("/cron/check_siteip", updateSiteIP)
+	http.HandleFunc("/cron/update_embargo_whitelist", updateEmbargoWhitelist)
 	metrics.SetupPrometheus()
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

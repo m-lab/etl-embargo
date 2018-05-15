@@ -52,6 +52,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 			log.Print("Fail with embargo single file " + fn + " \n")
 			http.Error(w, "Fail with embargo single file.", http.StatusInternalServerError)
 		}
+		log.Print("success with embargo single file")
 		return
 	}
 
@@ -63,7 +64,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Fail with embargo on new coming data for date: "+date[0]+" \n", http.StatusInternalServerError)
 			return
 		}
-		log.Print("success with mebargo one file")
+		log.Print("success with embargo one day data")
 		return
 	}
 }

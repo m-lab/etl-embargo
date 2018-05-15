@@ -35,22 +35,29 @@ type EmbargoConfig struct {
 	embargoService    *storage.Service
 }
 
+// EmbargoSingleton is the singleton object that is the pointer of the EmbargoConfig object.
 var EmbargoSingleton *EmbargoConfig
 
 func init() {
 	EmbargoSingleton = nil
 }
 
-// NewEmbargoConfig creates a new EmbargoConfig and returns it.
-func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, siteIPFile string) (*EmbargoConfig, error) {
+// GetEmbargoConfig creates a new EmbargoConfig and returns it.
+func GetEmbargoConfig(siteIPFile string) (*EmbargoConfig, error) {
 	if EmbargoSingleton != nil {
 		return EmbargoSingleton, nil
 	}
+	project := os.Getenv("GCLOUD_PROJECT")
+	log.Printf("current project: %s", project)
+	// the project must be one of "mlab-sandbox", "mlab-staging" or "malb-oti"
+	if project != "mlab-sandbox" && project != "mlab-staging" && project != "mlab-oti" && project != "mlab-testing" {
+		return nil, errors.New("this job is running in wrong project")
+	}
 
 	ec := &EmbargoConfig{
-		sourceBucket:      sourceBucketName,
-		destPrivateBucket: privateBucketName,
-		destPublicBucket:  publicBucketName,
+		sourceBucket:      "scraper-" + project,
+		destPrivateBucket: "embargo-" + project,
+		destPublicBucket:  "archive-" + project,
 	}
 	if siteIPFile == "" {
 		err := ec.whitelistChecker.LoadFromGCS()
@@ -74,15 +81,11 @@ func NewEmbargoConfig(sourceBucketName, privateBucketName, publicBucketName, sit
 	return ec, nil
 }
 
-func Update() error {
-	if EmbargoSingleton == nil {
-		log.Printf("need to create an embargo config first to update site IPs")
-		return errors.New("need to create an embargo config first to update site IPs")
-	}
-	err := EmbargoSingleton.whitelistChecker.LoadFromGCS()
+// UpdateWhitelist loads the site IP json file again and updates the whitelist in memory.
+func UpdateWhitelist() error {
+	_, err := GetEmbargoConfig("")
 	if err != nil {
-		log.Printf("cannot load site IP list from GCS")
-		return errors.New("cannot load site IP list from GCS")
+		return err
 	}
 	return nil
 }

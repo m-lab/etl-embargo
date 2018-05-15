@@ -22,18 +22,12 @@ import (
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query()["date"]
 	filename := r.URL.Query()["file"]
-	publicBucket := r.URL.Query()["publicBucket"]
-	privateBucket := r.URL.Query()["privateBucket"]
 	if len(date) == 0 && len(filename) == 0 {
 		fmt.Fprint(w, "Missing date or filename there\n")
 		http.NotFound(w, r)
 		return
 	}
-	if len(publicBucket) == 0 || len(privateBucket) == 0 {
-		fmt.Fprint(w, "Missing destination bucket there\n")
-		http.NotFound(w, r)
-		return
-	}
+
 	fn, err := storage.GetFilename(filename[0])
 	if err != nil {
 		log.Printf("Invalid filename: %s\n", fn)
@@ -44,13 +38,12 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	//log.Printf("filename: %s\n", fn)
 	removePrefix := fn[5:]
 	bucketNameEnd := strings.IndexByte(removePrefix, '/')
-	sourceBucket := removePrefix[0:bucketNameEnd]
 	filePath := removePrefix[bucketNameEnd+1:]
 
-	testConfig, err := embargo.NewEmbargoConfig(sourceBucket, privateBucket[0], publicBucket[0], "")
+	testConfig, err := embargo.GetEmbargoConfig("")
 	if err != nil {
 		log.Print("Cannot create embargo service.\n")
-		http.Error(w, "Cannot create embargo service.", http.StatusInternalServerError)
+		http.Error(w, "cannot create embargo service.", http.StatusInternalServerError)
 		return
 	}
 	if fn != "" {
@@ -79,7 +72,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 func updateSiteIP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Update the site IPs used for embargo process.\n")
 
-	err := embargo.Update()
+	err := embargo.UpdateWhitelist()
 	if err != nil {
 		fmt.Fprint(w, err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -42,8 +42,11 @@ func FormatDateAsInt(t time.Time) int {
 	return t.Year()*10000 + int(t.Month())*100 + t.Day()
 }
 
-// SiteIPURLTest is public URL of the test json file for site info.
-const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
+// SiteIPURLTest is public URL of the json file for site info for mlab-sandbox project.
+const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-sandbox/metadata/v0/current/mlab-host-ips.json"
+
+// SiteIPURLStaging is public URL of the json file for site info for mlab-staging project.
+const SiteIPURLStaging = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
 
 // SiteIPURL is public URL of the prod json file for site info.
 const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
@@ -91,7 +94,10 @@ func (wc *WhitelistChecker) LoadFromGCS() error {
 	if project == "mlab-oti" {
 		jsonURL = SiteIPURL
 	}
-	log.Printf("json file used: %s", jsonURL)
+	if project == "mlab-staging" {
+		jsonURL = SiteIPURLStaging
+	}
+	log.Printf("json file of site IPs: %s", jsonURL)
 	resp, err := http.Get(jsonURL)
 	if err != nil {
 		log.Printf("cannot download site IP json file.\n")

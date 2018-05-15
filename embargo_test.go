@@ -39,9 +39,9 @@ func TestEmbargo(t *testing.T) {
 		t.Error("Did not generate public data correctly.\n")
 	}
 
-	//cleanUpBucket(sourceBucket)
-	//cleanUpBucket(privateBucket)
-	//cleanUpBucket(publicBucket)
+	cleanUpBucket(sourceBucket)
+	cleanUpBucket(privateBucket)
+	cleanUpBucket(publicBucket)
 	return
 }
 

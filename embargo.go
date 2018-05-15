@@ -38,6 +38,22 @@ type EmbargoConfig struct {
 // EmbargoSingleton is the singleton object that is the pointer of the EmbargoConfig object.
 var EmbargoSingleton *EmbargoConfig
 
+// SiteIPURLTest is public URL of the json file for site info for mlab-sandbox project.
+const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-sandbox/metadata/v0/current/mlab-host-ips.json"
+
+// SiteIPURLStaging is public URL of the json file for site info for mlab-staging project.
+const SiteIPURLStaging = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
+
+// SiteIPURL is public URL of the prod json file for site info.
+const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
+
+var ProjectToURL = map[string]string{
+	"mlab-sandbox": SiteIPURLTest,
+	"mlab-testing": SiteIPURLTest,
+	"mlab-staging": SiteIPURLStaging,
+	"mlab-oti":     SiteIPURL,
+}
+
 func init() {
 	EmbargoSingleton = nil
 }
@@ -49,18 +65,20 @@ func GetEmbargoConfig(siteIPFile string) (*EmbargoConfig, error) {
 	}
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("current project: %s", project)
-	// the project must be one of "mlab-sandbox", "mlab-staging" or "malb-oti"
-	if project != "mlab-sandbox" && project != "mlab-staging" && project != "mlab-oti" && project != "mlab-testing" {
-		return nil, errors.New("this job is running in wrong project")
-	}
-
 	ec := &EmbargoConfig{
 		sourceBucket:      "scraper-" + project,
 		destPrivateBucket: "embargo-" + project,
 		destPublicBucket:  "archive-" + project,
 	}
+
+	jsonURL, ok := ProjectToURL[project]
+	// The project must be one of "mlab-sandbox", "mlab-staging", "mlab-oti", or "mlab-testing".
+	if !ok {
+		return nil, errors.New("this job is running in wrong project")
+	}
+	log.Printf("json file of site IPs: %s", jsonURL)
 	if siteIPFile == "" {
-		err := ec.whitelistChecker.LoadFromGCS()
+		err := ec.whitelistChecker.LoadFromURL(jsonURL)
 		if err != nil {
 			log.Printf("Cannot load site IP list from GCS.\n")
 			return nil, err
@@ -282,9 +300,6 @@ func (ec *EmbargoConfig) EmbargoOneDayData(date string, cutoffDate int) error {
 
 // EmbargoSingleFile embargo the input file.
 func (ec *EmbargoConfig) EmbargoSingleFile(filename string) error {
-	if ec.whitelistChecker.LoadFromGCS() != nil {
-		return errors.New("cannot load whitelist")
-	}
 	if !strings.Contains(filename, "tgz") || !strings.Contains(filename, "sidestream") {
 		return errors.New("not a proper sidestream file")
 	}

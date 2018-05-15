@@ -9,7 +9,7 @@ import (
 
 func TestBucketOperations(t *testing.T) {
 	destBucket := "bucket-gcs-operations-mlab-testing"
-	sourceBucket := "embargo-mlab-testing"
+	sourceBucket := "gcs-source-mlab-testing"
 
 	result := embargo.CopyOneFile(sourceBucket, destBucket, "whitelist_full")
 	if result == false {

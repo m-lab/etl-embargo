@@ -17,14 +17,14 @@ func cleanUpBucket(bucketName string) {
 }
 
 func TestEmbargo(t *testing.T) {
-	sourceBucket := "embargo-source-mlab-testing"
-	publicBucket := "embargo-output-mlab-testing"
-	privateBucket := "embargoed-data-mlab-testing"
-	testConfig, err := embargo.NewEmbargoConfig(sourceBucket, privateBucket, publicBucket, "testdata/whitelist_full")
+	testConfig, err := embargo.GetEmbargoConfig("testdata/whitelist_full")
 	if err != nil {
-		t.Error("Cannot create embargo service.\n")
+		t.Error(err.Error())
 		return
 	}
+	sourceBucket := "scraper-mlab-testing"
+	privateBucket := "embargo-mlab-testing"
+	publicBucket := "archive-mlab-testing"
 	embargo.DeleteFiles(sourceBucket, "")
 	embargo.UploadFile(sourceBucket, "testdata/20170315T000000Z-mlab3-sea03-sidestream-0000.tgz", "sidestream/2017/03/15/")
 	if testConfig.EmbargoOneDayData("20170315", 20160822) != nil {
@@ -52,9 +52,9 @@ func TestEmbargo(t *testing.T) {
 // with lists of inner files, call SplitFile on it, then verify that the pub
 // and private buffers contain the correct filenames.
 func TestSplitTarFile(t *testing.T) {
-	testConfig, err := embargo.NewEmbargoConfig("embargo-source-mlab-testing", "embargoed-data-mlab-testing", "embargo-output-mlab-testing", "testdata/whitelist_full")
+	testConfig, err := embargo.GetEmbargoConfig("testdata/whitelist_full")
 	if err != nil {
-		t.Error("Cannot create embargo service.\n")
+		t.Error(err.Error())
 		return
 	}
 	// Load input tar file.

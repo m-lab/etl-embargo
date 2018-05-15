@@ -16,22 +16,18 @@ import (
 
 // EmbargoHandler handles data for one day or a single file.
 // TODO(dev): make sure only authorized users can call this.
-// The input URL is like: "hostname:port/submit?date=yyyymmdd&file=gs://scraper-mlab-sandbox/sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz&&publicBucket=archive-mlab-sandbox&&privateBucket=embargo-mlab-sandbox"
+// For example, if we want to process embargo on
+// gs://scraper-mlab-sandbox/sidestream/2017/05/29/20170529T000000Z-mlab1-atl02-sidestream-0000.tgz
+// The input URL is like: "https://embargo-dot-mlab-sandbox.appspot.com/submit?file=Z3M6Ly9zY3JhcGVyLW1sYWItc2FuZGJveC9zaWRlc3RyZWFtLzIwMTcvMDUvMjkvMjAxNzA1MjlUMDAwMDAwWi1tbGFiMS1hdGwwMi1zaWRlc3RyZWFtLTAwMDAudGd6"
 func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query()["date"]
 	filename := r.URL.Query()["file"]
-	publicBucket := r.URL.Query()["publicBucket"]
-	privateBucket := r.URL.Query()["privateBucket"]
 	if len(date) == 0 && len(filename) == 0 {
 		fmt.Fprint(w, "Missing date or filename there\n")
 		http.NotFound(w, r)
 		return
 	}
-	if len(publicBucket) == 0 || len(privateBucket) == 0 {
-		fmt.Fprint(w, "Missing destination bucket there\n")
-		http.NotFound(w, r)
-		return
-	}
+
 	fn, err := storage.GetFilename(filename[0])
 	if err != nil {
 		log.Printf("Invalid filename: %s\n", fn)
@@ -42,13 +38,12 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 	//log.Printf("filename: %s\n", fn)
 	removePrefix := fn[5:]
 	bucketNameEnd := strings.IndexByte(removePrefix, '/')
-	sourceBucket := removePrefix[0:bucketNameEnd]
 	filePath := removePrefix[bucketNameEnd+1:]
 
-	testConfig, err := embargo.NewEmbargoConfig(sourceBucket, privateBucket[0], publicBucket[0], "")
+	testConfig, err := embargo.GetEmbargoConfig("")
 	if err != nil {
-		log.Print("Cannot create embargo service.\n")
-		http.Error(w, "Cannot create embargo service.", http.StatusInternalServerError)
+		log.Print(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if fn != "" {
@@ -57,6 +52,7 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 			log.Print("Fail with embargo single file " + fn + " \n")
 			http.Error(w, "Fail with embargo single file.", http.StatusInternalServerError)
 		}
+		log.Print("success with embargo single file")
 		return
 	}
 
@@ -66,9 +62,23 @@ func EmbargoHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Print("Fail with embargo on new coming data for date: " + date[0] + " \n")
 			http.Error(w, "Fail with embargo on new coming data for date: "+date[0]+" \n", http.StatusInternalServerError)
+			return
 		}
+		log.Print("success with embargo one day data")
 		return
 	}
+}
+
+// Update the embargo whitelist by reloading the site IPs daily
+func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Update the site IPs used for embargo process.\n")
+
+	err := embargo.UpdateWhitelist()
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	return
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +88,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
+	http.HandleFunc("/cron/update_embargo_whitelist", updateEmbargoWhitelist)
 	metrics.SetupPrometheus()
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

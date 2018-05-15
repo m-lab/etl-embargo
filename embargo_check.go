@@ -42,12 +42,6 @@ func FormatDateAsInt(t time.Time) int {
 	return t.Year()*10000 + int(t.Month())*100 + t.Day()
 }
 
-// SiteIPURLTest is public URL of the test json file for site info.
-const SiteIPURLTest = "https://storage.googleapis.com/operator-mlab-staging/metadata/v0/current/mlab-host-ips.json"
-
-// SiteIPURL is public URL of the prod json file for site info.
-const SiteIPURL = "https://storage.googleapis.com/operator-mlab-oti/metadata/v0/current/mlab-host-ips.json"
-
 // Site is a struct for parsing json file.
 type Site struct {
 	Hostname string `json:"hostname"`
@@ -78,19 +72,13 @@ func FilterSiteIPs(body []byte) (map[string]struct{}, error) {
 			filteredIPList[site.Ipv6] = struct{}{}
 		}
 	}
+	log.Printf("Load whitelist with length %d", len(filteredIPList))
 	return filteredIPList, nil
 }
 
 // LoadFromGCS loads the embargo IP whitelist from public URL.
 // TODO: add unittest for this func.
-func (wc *WhitelistChecker) LoadFromGCS() error {
-	project := os.Getenv("GCLOUD_PROJECT")
-	log.Printf("Using project: %s\n", project)
-	jsonURL := SiteIPURLTest
-	if project == "mlab-oti" {
-		jsonURL = SiteIPURL
-	}
-
+func (wc *WhitelistChecker) LoadFromURL(jsonURL string) error {
 	resp, err := http.Get(jsonURL)
 	if err != nil {
 		log.Printf("cannot download site IP json file.\n")

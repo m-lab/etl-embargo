@@ -64,7 +64,7 @@ func TestSplitTarFile(t *testing.T) {
 	}
 	defer file.Close()
 
-	privateBuf, publicBuf, err := testConfig.SplitFile(file, false)
+	privateBuf, publicBuf, err := testConfig.SplitFile(file, false, "Monday")
 	if err != nil {
 		t.Error("Did not perform embargo correctly.\n")
 	}

@@ -13,26 +13,52 @@ import (
 var (
 	// Measures the number of files that was processed by embargo app engine successfully.
 	// Provides metrics:
-	//   embargo_success_total
+	//   embargo_Success_Total
 	// Example usage:
-	//   metrics.EmbargoSuccess.Inc()
+	//   metrics.Metrics_embargoSuccessTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 	Metrics_embargoSuccessTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "embargo_Success_Total",
-			Help: "Number of files that was processed by embargo app engine successfully.",
+			Help: "Number of tar files that were processed by embargo app engine successfully.",
 		},
 		// "sidestream", "Monday"
 		[]string{"experiment", "day_of_week"})
 
 	// Measures the number of files that was not processed by embargo app engine successfully.
 	// Provides metrics:
-	//   embargo_error_total
+	//   embargo_Error_Total
 	// Example usage:
-	//   metrics.EmbargoError.Inc()
+	//   metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 	Metrics_embargoErrorTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "embargo_Error_Total",
-			Help: "Number of files that was not processed by embargo app engine successfully.",
+			Help: "Number of tar files that were not processed by embargo app engine successfully.",
+		},
+		// "sidestream", "Monday"
+		[]string{"experiment", "day_of_week"})
+
+	// Measures the number of tests that were published through embargo app engine successfully.
+	// Provides metrics:
+	//   embargo_Public_Test_Total
+	// Example usage:
+	//   metrics.Metrics_embargoPublicTestTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+	Metrics_embargoPublicTestTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "embargo_Public_Test_Total",
+			Help: "Number of sidestream tests that were published by embargo app engine successfully.",
+		},
+		// "sidestream", "Monday"
+		[]string{"experiment", "day_of_week"})
+
+	// Measures the number of tests that were embargoed through embargo app engine successfully.
+	// Provides metrics:
+	//   embargo_Private_Test_Total
+	// Example usage:
+	//   metrics.Metrics_embargoPrivateTestTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+	Metrics_embargoPrivateTestTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "embargo_Private_Test_Total",
+			Help: "Number of sidestream tests that were embargoed by embargo app engine successfully.",
 		},
 		// "sidestream", "Monday"
 		[]string{"experiment", "day_of_week"})
@@ -68,6 +94,8 @@ func SetupPrometheus() {
 	// Register the metrics defined with Prometheus's default registry.
 	prometheus.MustRegister(Metrics_embargoSuccessTotal)
 	prometheus.MustRegister(Metrics_embargoErrorTotal)
+	prometheus.MustRegister(Metrics_embargoPublicTestTotal)
+	prometheus.MustRegister(Metrics_embargoPrivateTestTotal)
 
 	go http.ListenAndServe(":9090", mux)
 }

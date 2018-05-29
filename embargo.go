@@ -118,7 +118,7 @@ func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf 
 }
 
 // SplitFile splits one tar files into 2 buffers.
-func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (bytes.Buffer, bytes.Buffer, error) {
+func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool, dayOfWeek string) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
@@ -169,6 +169,9 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 		}
 		if moreThanOneYear || !strings.Contains(basename, "web100") || ec.whitelistChecker.CheckInWhiteList(basename) {
 			// put this file to a public buffer
+			if strings.Contains(basename, "web100") {
+				metrics.Metrics_embargoPublicTestTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+			}
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
 				return embargoBuf, publicBuf, err
@@ -179,6 +182,9 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 			}
 		} else {
 			// put this file to a private buffer
+			if strings.Contains(basename, "web100") {
+				metrics.Metrics_embargoPrivateTestTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+			}
 			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
 				return embargoBuf, publicBuf, err
@@ -221,7 +227,7 @@ func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, mo
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
 	}
-	embargoBuf, publicBuf, err := ec.SplitFile(content, moreThanOneYear)
+	embargoBuf, publicBuf, err := ec.SplitFile(content, moreThanOneYear, dayOfWeek)
 	if err != nil {
 		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
 		return err

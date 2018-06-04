@@ -170,7 +170,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool, dayO
 		if moreThanOneYear || !strings.Contains(basename, "web100") || ec.whitelistChecker.CheckInWhiteList(basename) {
 			// put this file to a public buffer
 			if strings.Contains(basename, "web100") {
-				metrics.Metrics_embargoPublicTestTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+				metrics.Metrics_embargoTestTotal.WithLabelValues("sidestream", "public").Inc()
 			}
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
@@ -183,7 +183,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool, dayO
 		} else {
 			// put this file to a private buffer
 			if strings.Contains(basename, "web100") {
-				metrics.Metrics_embargoPrivateTestTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+				metrics.Metrics_embargoTestTotal.WithLabelValues("sidestream", "private").Inc()
 			}
 			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
@@ -225,19 +225,19 @@ func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, mo
 	// dayOfWeek is calculated for prometheus monitoring.
 	dayOfWeek, err := GetDayOfWeek(tarfileName)
 	if err != nil {
-		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", "Unknown").Inc()
+		metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "Unknown").Inc()
 	}
 	embargoBuf, publicBuf, err := ec.SplitFile(content, moreThanOneYear, dayOfWeek)
 	if err != nil {
-		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+		metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "error").Inc()
 		return err
 	}
 	if err = ec.WriteResults(tarfileName, embargoBuf, publicBuf); err != nil {
-		metrics.Metrics_embargoErrorTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+		metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "error").Inc()
 		return err
 	}
 
-	metrics.Metrics_embargoSuccessTotal.WithLabelValues("sidestream", dayOfWeek).Inc()
+	metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "success").Inc()
 	return nil
 }
 

@@ -11,36 +11,37 @@ import (
 )
 
 var (
-	// Measures the number of files that was processed by embargo app engine successfully.
+	// Measures the number of tar files that was processed by embargo app engine.
 	// Provides metrics:
-	//   embargo_success_total
+	//   embargo_tar_total
 	// Example usage:
-	//   metrics.EmbargoSuccess.Inc()
-	Metrics_embargoSuccessTotal = prometheus.NewCounterVec(
+	//   metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "status").Inc()
+	Metrics_embargoTarTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "embargo_Success_Total",
-			Help: "Number of files that was processed by embargo app engine successfully.",
+			Name: "embargo_tar_total",
+			Help: "Number of tar files that were processed by embargo app engine.",
 		},
-		// "sidestream", "Monday"
-		[]string{"experiment", "day_of_week"})
+		// "sidestream", "success/error"
+		[]string{"dataset", "status"})
 
-	// Measures the number of files that was not processed by embargo app engine successfully.
+	// Measures the number of tests that were processed through embargo app engine.
 	// Provides metrics:
-	//   embargo_error_total
+	//   embargo_test_total
 	// Example usage:
-	//   metrics.EmbargoError.Inc()
-	Metrics_embargoErrorTotal = prometheus.NewCounterVec(
+	//   metrics.Metrics_embargoTestTotal.WithLabelValues("sidestream", "status").Inc()
+	Metrics_embargoTestTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "embargo_Error_Total",
-			Help: "Number of files that was not processed by embargo app engine successfully.",
+			Name: "embargo_test_total",
+			Help: "Number of sidestream tests that were processed by embargo app engine.",
 		},
-		// "sidestream", "Monday"
-		[]string{"experiment", "day_of_week"})
+		// "sidestream", "public/private"
+		[]string{"dataset", "status"})
 
 	// IPv6ErrorsTotal counts the kinds of errors encountered when normalizing IPv6 addresses.
-	//
+	// Provides metrics:
+	//   embargo_ipv6_errors_total
 	// Example usage:
-	//     metrics.IPv6ErrorsTotal.WithLabelValues(err.Error()).Inc()
+	//   metrics.IPv6ErrorsTotal.WithLabelValues(err.Error()).Inc()
 	IPv6ErrorsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "embargo_ipv6_errors_total",
@@ -66,8 +67,8 @@ func SetupPrometheus() {
 
 	http.Handle("/metrics", promhttp.Handler())
 	// Register the metrics defined with Prometheus's default registry.
-	prometheus.MustRegister(Metrics_embargoSuccessTotal)
-	prometheus.MustRegister(Metrics_embargoErrorTotal)
+	prometheus.MustRegister(Metrics_embargoTarTotal)
+	prometheus.MustRegister(Metrics_embargoTestTotal)
 
 	go http.ListenAndServe(":9090", mux)
 }

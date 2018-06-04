@@ -22,7 +22,7 @@ var (
 			Help: "Number of tar files that were processed by embargo app engine.",
 		},
 		// "sidestream", "success/error"
-		[]string{"experiment", "status"})
+		[]string{"dataset", "status"})
 
 	// Measures the number of tests that were processed through embargo app engine.
 	// Provides metrics:
@@ -35,7 +35,7 @@ var (
 			Help: "Number of sidestream tests that were processed by embargo app engine.",
 		},
 		// "sidestream", "public/private"
-		[]string{"experiment", "status"})
+		[]string{"dataset", "status"})
 
 	// IPv6ErrorsTotal counts the kinds of errors encountered when normalizing IPv6 addresses.
 	// Provides metrics:

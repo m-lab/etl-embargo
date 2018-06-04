@@ -20,23 +20,6 @@ type WhitelistChecker struct {
 	EmbargoWhiteList map[string]struct{}
 }
 
-// GetDayOfWeek returns "Tuesday" for date "2017/05/16"
-// for input filepath string like
-// "sidestream/2017/05/16/20170516T000000Z-mlab1-atl06-sidestream-0000.tgz"
-// This func is used in calculate monitoring metrics.
-func GetDayOfWeek(filename string) (string, error) {
-	if len(filename) < 21 {
-		return "", errors.New("invalid filename")
-	}
-	date := filename[11:21]
-	dateStr := strings.Replace(date, "/", "-", -1) + " 00:00:00"
-	parsedDate, err := time.Parse("2006-01-02 15:04:05", dateStr)
-	if err != nil {
-		return "", err
-	}
-	return parsedDate.Weekday().String(), nil
-}
-
 // FormatDateAsInt return a date in interger as format yyyymmdd.
 func FormatDateAsInt(t time.Time) int {
 	return t.Year()*10000 + int(t.Month())*100 + t.Day()

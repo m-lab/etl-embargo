@@ -118,7 +118,7 @@ func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf 
 }
 
 // SplitFile splits one tar files into 2 buffers.
-func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool, dayOfWeek string) (bytes.Buffer, bytes.Buffer, error) {
+func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (bytes.Buffer, bytes.Buffer, error) {
 	var embargoBuf bytes.Buffer
 	var publicBuf bytes.Buffer
 	// Create tar reader
@@ -222,12 +222,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool, dayO
 // bucket directly when it becomes one year old.
 // The tarfileName is like 20170516T000000Z-mlab1-atl06-sidestream-0000.tgz
 func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, moreThanOneYear bool) error {
-	// dayOfWeek is calculated for prometheus monitoring.
-	dayOfWeek, err := GetDayOfWeek(tarfileName)
-	if err != nil {
-		metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "Unknown").Inc()
-	}
-	embargoBuf, publicBuf, err := ec.SplitFile(content, moreThanOneYear, dayOfWeek)
+	embargoBuf, publicBuf, err := ec.SplitFile(content, moreThanOneYear)
 	if err != nil {
 		metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "error").Inc()
 		return err

@@ -106,11 +106,13 @@ func (ec *EmbargoConfig) WriteResults(tarfileName string, embargoBuf, publicBuf 
 	publicObject := &storage.Object{Name: tarfileName}
 	embargoObject := &storage.Object{Name: embargoTarfileName}
 	if _, err := ec.embargoService.Objects.Insert(ec.destPublicBucket, publicObject).Media(&publicBuf).Do(); err != nil {
+		metrics.Metrics_embargoTarOutputTotal.WithLabelValues("sidestream", "public").Inc()
 		log.Printf("Objects insert failed: %v\n", err)
 		return err
 	}
 
 	if _, err := ec.embargoService.Objects.Insert(ec.destPrivateBucket, embargoObject).Media(&embargoBuf).Do(); err != nil {
+		metrics.Metrics_embargoTarOutputTotal.WithLabelValues("sidestream", "private").Inc()
 		log.Printf("Objects insert failed: %v\n", err)
 		return err
 	}

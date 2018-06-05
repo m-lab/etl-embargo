@@ -174,7 +174,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 		if moreThanOneYear || !strings.Contains(basename, "web100") || ec.whitelistChecker.CheckInWhiteList(basename) {
 			// put this file to a public buffer
 			if strings.Contains(basename, "web100") {
-				metrics.Metrics_embargoTestTotal.WithLabelValues("sidestream", "public").Inc()
+				metrics.Metrics_embargoFileTotal.WithLabelValues("sidestream", "public").Inc()
 			}
 			if err := publicTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the public header: %v\n", err)
@@ -187,7 +187,7 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 		} else {
 			// put this file to a private buffer
 			if strings.Contains(basename, "web100") {
-				metrics.Metrics_embargoTestTotal.WithLabelValues("sidestream", "private").Inc()
+				metrics.Metrics_embargoFileTotal.WithLabelValues("sidestream", "private").Inc()
 			}
 			if err := embargoTw.WriteHeader(hdr); err != nil {
 				log.Printf("cannot write the embargoed header: %v\n", err)
@@ -228,15 +228,15 @@ func (ec *EmbargoConfig) SplitFile(content io.Reader, moreThanOneYear bool) (byt
 func (ec *EmbargoConfig) EmbargoOneTar(content io.Reader, tarfileName string, moreThanOneYear bool) error {
 	embargoBuf, publicBuf, err := ec.SplitFile(content, moreThanOneYear)
 	if err != nil {
-		metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "error").Inc()
+		metrics.Metrics_embargoTarInputTotal.WithLabelValues("sidestream", "error").Inc()
 		return err
 	}
 	if err = ec.WriteResults(tarfileName, embargoBuf, publicBuf); err != nil {
-		metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "error").Inc()
+		metrics.Metrics_embargoTarInputTotal.WithLabelValues("sidestream", "error").Inc()
 		return err
 	}
 
-	metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "success").Inc()
+	metrics.Metrics_embargoTarInputTotal.WithLabelValues("sidestream", "success").Inc()
 	return nil
 }
 

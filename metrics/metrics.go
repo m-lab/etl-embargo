@@ -24,11 +24,11 @@ var (
 		// "sidestream", "success/error"
 		[]string{"dataset", "status"})
 
-	// Measures the number of tar files that was output by embargo app engine.
+	// Measures the number of output tar files by embargo app engine.
 	// Provides metrics:
 	//   embargo_tar_output_total
 	// Example usage:
-	//   metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "status").Inc()
+	//   metrics.Metrics_embargoTarOutputTotal.WithLabelValues("sidestream", "status").Inc()
 	Metrics_embargoTarOutputTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "embargo_tar_output_total",

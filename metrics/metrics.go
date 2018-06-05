@@ -13,26 +13,39 @@ import (
 var (
 	// Measures the number of tar files that was processed by embargo app engine.
 	// Provides metrics:
-	//   embargo_tar_total
+	//   embargo_tar_input_total
 	// Example usage:
-	//   metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "status").Inc()
-	Metrics_embargoTarTotal = prometheus.NewCounterVec(
+	//   metrics.Metrics_embargoTarTotal.WithLabelValues("sidestream", "success").Inc()
+	Metrics_embargoTarInputTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "embargo_tar_total",
+			Name: "embargo_tar_input_total",
 			Help: "Number of tar files that were processed by embargo app engine.",
 		},
 		// "sidestream", "success/error"
 		[]string{"dataset", "status"})
 
-	// Measures the number of tests that were processed through embargo app engine.
+	// Measures the number of output tar files by embargo app engine.
 	// Provides metrics:
-	//   embargo_test_total
+	//   embargo_tar_output_total
 	// Example usage:
-	//   metrics.Metrics_embargoTestTotal.WithLabelValues("sidestream", "status").Inc()
-	Metrics_embargoTestTotal = prometheus.NewCounterVec(
+	//   metrics.Metrics_embargoTarOutputTotal.WithLabelValues("sidestream", "public").Inc()
+	Metrics_embargoTarOutputTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "embargo_test_total",
-			Help: "Number of sidestream tests that were processed by embargo app engine.",
+			Name: "embargo_tar_output_total",
+			Help: "Number of tar output files by embargo app engine.",
+		},
+		// "sidestream", "public/private"
+		[]string{"dataset", "status"})
+
+	// Measures the number of web100 files that were processed through embargo app engine.
+	// Provides metrics:
+	//   embargo_file_total
+	// Example usage:
+	//   metrics.Metrics_embargoTestTotal.WithLabelValues("sidestream", "private").Inc()
+	Metrics_embargoFileTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "embargo_file_total",
+			Help: "Number of web100 sidestream files that were processed by embargo app engine.",
 		},
 		// "sidestream", "public/private"
 		[]string{"dataset", "status"})
@@ -67,8 +80,9 @@ func SetupPrometheus() {
 
 	http.Handle("/metrics", promhttp.Handler())
 	// Register the metrics defined with Prometheus's default registry.
-	prometheus.MustRegister(Metrics_embargoTarTotal)
-	prometheus.MustRegister(Metrics_embargoTestTotal)
+	prometheus.MustRegister(Metrics_embargoTarInputTotal)
+	prometheus.MustRegister(Metrics_embargoTarOutputTotal)
+	prometheus.MustRegister(Metrics_embargoFileTotal)
 
 	go http.ListenAndServe(":9090", mux)
 }

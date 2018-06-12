@@ -81,6 +81,18 @@ func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// Unembargo the data one year ago.
+func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Unembargo the date one year ago.\n")
+	
+	err := embargo.UnembargoCron()
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	return
+}
+
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "ok")
 }
@@ -89,6 +101,7 @@ func main() {
 	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
 	http.HandleFunc("/cron/update_embargo_whitelist", updateEmbargoWhitelist)
+	http.HandleFunc("/cron/unembargo", unEmbargoCron)
 	metrics.SetupPrometheus()
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

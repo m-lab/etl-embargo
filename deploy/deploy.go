@@ -84,7 +84,7 @@ func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 // Unembargo the data one year ago.
 func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Unembargo the date one year ago.\n")
-	
+
 	err := embargo.UnembargoCron()
 	if err != nil {
 		log.Print(err.Error())

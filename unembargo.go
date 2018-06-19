@@ -134,7 +134,7 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 				log.Printf("Objects deletion from private bucket failed.\n")
 				return fmt.Errorf("Objects deletion from private bucket failed.\n")
 			}
-			metrics.Metrics_embargoTarOutputTotal.WithLabelValues("sidestream").Inc()
+			metrics.Metrics_unembargoTarTotal.WithLabelValues("sidestream").Inc()
 		}
 		pageToken = sourceFilesList.NextPageToken
 		if pageToken == "" {

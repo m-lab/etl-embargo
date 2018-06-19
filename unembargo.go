@@ -38,6 +38,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+
+	"github.com/m-lab/etl-embargo/metrics"
 )
 
 type UnembargoConfig struct {
@@ -132,6 +134,7 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 				log.Printf("Objects deletion from private bucket failed.\n")
 				return fmt.Errorf("Objects deletion from private bucket failed.\n")
 			}
+			metrics.Metrics_unembargoTarTotal.WithLabelValues("sidestream").Inc()
 		}
 		pageToken = sourceFilesList.NextPageToken
 		if pageToken == "" {

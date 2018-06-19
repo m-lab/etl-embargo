@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	// Measures the number of tar files that was processed by embargo app engine.
+	// Measures the number of tar files that was processed by embargo service.
 	// Provides metrics:
 	//   embargo_tar_input_total
 	// Example usage:
@@ -24,7 +24,7 @@ var (
 		// "sidestream", "success/error"
 		[]string{"dataset", "status"})
 
-	// Measures the number of output tar files by embargo app engine.
+	// Measures the number of output tar files by embargo service.
 	// Provides metrics:
 	//   embargo_tar_output_total
 	// Example usage:
@@ -37,7 +37,7 @@ var (
 		// "sidestream", "public/private"
 		[]string{"dataset", "status"})
 
-	// Measures the number of web100 files that were processed through embargo app engine.
+	// Measures the number of web100 files that were processed by embargo service.
 	// Provides metrics:
 	//   embargo_file_total
 	// Example usage:
@@ -49,6 +49,19 @@ var (
 		},
 		// "sidestream", "public/private"
 		[]string{"dataset", "status"})
+
+	// Measures the number of tar files that was unembargoed by daily unembargo cron job.
+	// Provides metrics:
+	//   unembargo_tar_total
+	// Example usage:
+	//   metrics.Metrics_unembargoTarTotal.WithLabelValues("sidestream").Inc()
+	Metrics_unembargoTarTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "unembargo_tar_total",
+			Help: "Number of sidestream tar files that were unembargoed.",
+		},
+		// "sidestream"
+		[]string{"dataset"})
 
 	// IPv6ErrorsTotal counts the kinds of errors encountered when normalizing IPv6 addresses.
 	// Provides metrics:
@@ -83,6 +96,7 @@ func SetupPrometheus() {
 	prometheus.MustRegister(Metrics_embargoTarInputTotal)
 	prometheus.MustRegister(Metrics_embargoTarOutputTotal)
 	prometheus.MustRegister(Metrics_embargoFileTotal)
+	prometheus.MustRegister(Metrics_unembargoTarTotal)
 
 	go http.ListenAndServe(":9090", mux)
 }

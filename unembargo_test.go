@@ -10,7 +10,7 @@ import (
 func TestUnembargoLegacy(t *testing.T) {
 	privateBucket := "unembargoed-data-mlab-testing"
 	publicBucket := "bigstore-data-mlab-testing"
-	testConfig := embargo.NewConfig(privateBucket, publicBucket)
+	testConfig := embargo.NewUnembargoConfig(privateBucket, publicBucket)
 	// Prepare the buckets for input & output.
 	embargo.DeleteFiles(privateBucket, "")
 	embargo.UploadFile(privateBucket, "testdata/20160102T000000Z-mlab3-sin01-sidestream-0000.tgz", "sidestream/2016/01/02/")

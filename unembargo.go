@@ -40,13 +40,13 @@ import (
 	"cloud.google.com/go/storage"
 )
 
-type config struct {
+type UnembargoConfig struct {
 	privateBucket string
 	publicBucket  string
 }
 
-func NewConfig(privateBucketName, publicBucketName string) *config {
-	nc := &config{
+func NewUnembargoConfig(privateBucketName, publicBucketName string) *UnembargoConfig {
+	nc := &UnembargoConfig{
 		privateBucket: privateBucketName,
 		publicBucket:  publicBucketName,
 	}
@@ -143,7 +143,7 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 
 // Unembargo unembargo the data of the input date in format yyyymmdd.
 // TODO(dev): add more validity check for input date.
-func (nc *config) Unembargo(date int) error {
+func (nc *UnembargoConfig) Unembargo(date int) error {
 	if date <= 20160000 || date > 21000000 {
 		return errors.New("The date is out of range.")
 	}
@@ -157,10 +157,20 @@ func (nc *config) Unembargo(date int) error {
 
 	log.SetOutput(f)
 
-	if date < FormatDateAsInt(time.Now().AddDate(-1, 0, 0)) {
+	if date <= FormatDateAsInt(time.Now().AddDate(-1, 0, 0)) {
 		dateStr := strconv.Itoa(date)
 		inputDir := "sidestream/" + dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
 		return UnEmbargoOneDayLegacyFiles(nc.privateBucket, nc.publicBucket, inputDir)
 	}
 	return fmt.Errorf("Date is too new, not qualified for unembargo.")
+}
+
+func UnembargoCron() error {
+	project := os.Getenv("GCLOUD_PROJECT")
+	log.Printf("current project: %s", project)
+	privateBucketName := "embargo-" + project
+	publicBucketName := "archive-" + project
+
+	uc := NewUnembargoConfig(privateBucketName, publicBucketName)
+	return uc.Unembargo(FormatDateAsInt(time.Now().AddDate(-1, 0, 0)))
 }

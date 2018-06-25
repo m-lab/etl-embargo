@@ -168,12 +168,12 @@ func (nc *UnembargoConfig) Unembargo(date int) error {
 	return fmt.Errorf("Date is too new, not qualified for unembargo.")
 }
 
-func UnembargoCron() error {
+func UnembargoCron(date int) error {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("current project: %s", project)
 	privateBucketName := "embargo-" + project
 	publicBucketName := "archive-" + project
 
 	uc := NewUnembargoConfig(privateBucketName, publicBucketName)
-	return uc.Unembargo(FormatDateAsInt(time.Now().AddDate(-1, 0, 0)))
+	return uc.Unembargo(date)
 }

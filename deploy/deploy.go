@@ -6,6 +6,7 @@ import (
 	"net/http"
 	// Enable exported debug vars.  See https://golang.org/pkg/expvar/
 	_ "expvar"
+	"strconv"
 	"strings"
 	"time"
 
@@ -81,15 +82,21 @@ func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// Unembargo the data one year ago.
+// Unembargo the data one year ago if the date is not specified.
+// If there is a date more than one year ago, then unembargo the data of that date.
 func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Unembargo the date one year ago.\n")
-
-	err := embargo.UnembargoCron()
+	date := r.URL.Query()["date"]
+	undate := embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0))
+	if len(date) != 0 {
+		undate, _ = strconv.Atoi(date[0])
+	}
+	err := embargo.UnembargoCron(undate)
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
 	return
 }
 

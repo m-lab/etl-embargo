@@ -128,12 +128,12 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 			if _, err := dst.CopierFrom(src).Run(context.Background()); err != nil {
 				return fmt.Errorf("Objects copy failed: %v\n", err)
 			}
-			// Delete the file in private bucket
-			result := unembargoService.Objects.Delete(sourceBucket, oneItem.Name).Do()
-			if result != nil {
-				log.Printf("Objects deletion from private bucket failed.\n")
-				return fmt.Errorf("Objects deletion from private bucket failed.\n")
-			}
+			// Do not delete the file in private bucket
+			//result := unembargoService.Objects.Delete(sourceBucket, oneItem.Name).Do()
+			//if result != nil {
+			//	log.Printf("Objects deletion from private bucket failed.\n")
+			//	return fmt.Errorf("Objects deletion from private bucket failed.\n")
+			//}
 			metrics.Metrics_unembargoTarTotal.WithLabelValues("sidestream").Inc()
 		}
 		pageToken = sourceFilesList.NextPageToken

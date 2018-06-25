@@ -20,7 +20,7 @@ func TestUnembargoLegacy(t *testing.T) {
 		return
 	}
 	// Check the privateBucket does not have that file any more
-	privateNames := embargo.GetFileNamesFromBucket(privateBucket)
+	//privateNames := embargo.GetFileNamesFromBucket(privateBucket)
 	//if len(privateNames) != 0 {
 	//	t.Errorf("The embargoed copy should be deleted after the process.\n")
 	//}

@@ -85,12 +85,13 @@ func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 // Unembargo the data one year ago if the date is not specified.
 // If there is a date more than one year ago, then unembargo the data of that date.
 func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Unembargo the date one year ago.\n")
+	log.Printf("Unembargo data.\n")
 	date := r.URL.Query()["date"]
 	undate := embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0))
 	if len(date) != 0 {
 		undate, _ = strconv.Atoi(date[0])
 	}
+	log.Printf("input date is %d.", undate)
 	err := embargo.UnembargoCron(undate)
 	if err != nil {
 		log.Print(err.Error())

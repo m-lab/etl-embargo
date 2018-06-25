@@ -165,6 +165,7 @@ func (nc *UnembargoConfig) Unembargo(date int) error {
 		inputDir := "sidestream/" + dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
 		return UnEmbargoOneDayLegacyFiles(nc.privateBucket, nc.publicBucket, inputDir)
 	}
+        log.Printf("Date is too new, not qualified for unembargo.")
 	return fmt.Errorf("Date is too new, not qualified for unembargo.")
 }
 

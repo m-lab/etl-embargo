@@ -101,6 +101,7 @@ func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("success")
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -110,8 +111,8 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
-	http.HandleFunc("/cron/update_embargo_whitelist", updateEmbargoWhitelist)
-	http.HandleFunc("/cron/unembargo", unEmbargoCron)
+	http.HandleFunc("/update_embargo_whitelist", updateEmbargoWhitelist)
+	http.HandleFunc("/unembargo", unEmbargoCron)
 	metrics.SetupPrometheus()
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

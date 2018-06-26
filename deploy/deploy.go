@@ -81,6 +81,7 @@ func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 // Unembargo the data one year ago if the date is not specified.

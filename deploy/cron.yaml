@@ -2,6 +2,8 @@ cron:
 - description: "Update the embargo whitelist by reloading the site IPs daily at 3:00 UTC"
   url: /update_embargo_whitelist
   schedule: every day 03:00
+  target: embargo
 - description: "Unembargo dat one year ago daily at 5:00 UTC"
   url: /unembargo
   schedule: every day 05:00
+  target: embargo

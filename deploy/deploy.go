@@ -78,6 +78,7 @@ func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
@@ -96,8 +97,9 @@ func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-
+	log.Println("success")
 	w.WriteHeader(http.StatusOK)
 }
 

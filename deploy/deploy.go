@@ -79,7 +79,7 @@ func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	return
+	w.WriteHeader(http.StatusOK)
 }
 
 // Unembargo the data one year ago if the date is not specified.
@@ -98,7 +98,7 @@ func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	return
+	w.WriteHeader(http.StatusOK)
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {

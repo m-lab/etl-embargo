@@ -91,7 +91,7 @@ func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query().Get("date")
 	undate := embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0))
 	err := nil
-	if len(date) != 0 {
+	if date != "" {
 		undate, err = strconv.Atoi(date)
 		if err != nil {
 			log.Print(err.Error())

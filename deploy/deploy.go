@@ -90,7 +90,7 @@ func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Unembargo data.\n")
 	date := r.URL.Query().Get("date")
 	undate := embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0))
-	err := nil
+	var err error
 	if date != "" {
 		undate, err = strconv.Atoi(date)
 		if err != nil {
@@ -100,7 +100,7 @@ func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	log.Printf("Date of the unembargo data is %d.", undate)
-	err := embargo.UnembargoCron(undate)
+	err = embargo.UnembargoCron(undate)
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -90,8 +90,14 @@ func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Unembargo data.\n")
 	date := r.URL.Query().Get("date")
 	undate := embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0))
+	err := nil
 	if len(date) != 0 {
-		undate, _ = strconv.Atoi(date)
+		undate, err = strconv.Atoi(date)
+		if err != nil {
+			log.Print(err.Error())
+		        http.Error(w, err.Error(), http.StatusInternalServerError)
+		        return
+		}
 	}
 	log.Printf("Date of the unembargo data is %d.", undate)
 	err := embargo.UnembargoCron(undate)
@@ -112,8 +118,8 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/submit", EmbargoHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
-	http.HandleFunc("/update_embargo_whitelist", updateEmbargoWhitelist)
-	http.HandleFunc("/unembargo", unEmbargoCron)
+	http.HandleFunc("/cron/update_embargo_whitelist", updateEmbargoWhitelist)
+	http.HandleFunc("/cron/unembargo", unEmbargoCron)
 	metrics.SetupPrometheus()
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

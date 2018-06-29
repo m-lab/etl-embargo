@@ -128,12 +128,7 @@ func UnEmbargoOneDayLegacyFiles(sourceBucket string, destBucket string, prefixFi
 			if _, err := dst.CopierFrom(src).Run(context.Background()); err != nil {
 				return fmt.Errorf("Objects copy failed: %v\n", err)
 			}
-			// Delete the file in private bucket
-			result := unembargoService.Objects.Delete(sourceBucket, oneItem.Name).Do()
-			if result != nil {
-				log.Printf("Objects deletion from private bucket failed.\n")
-				return fmt.Errorf("Objects deletion from private bucket failed.\n")
-			}
+
 			metrics.Metrics_unembargoTarTotal.WithLabelValues("sidestream").Inc()
 		}
 		pageToken = sourceFilesList.NextPageToken
@@ -165,15 +160,16 @@ func (nc *UnembargoConfig) Unembargo(date int) error {
 		inputDir := "sidestream/" + dateStr[0:4] + "/" + dateStr[4:6] + "/" + dateStr[6:8]
 		return UnEmbargoOneDayLegacyFiles(nc.privateBucket, nc.publicBucket, inputDir)
 	}
+	log.Printf("Date %d is too new, not qualified for unembargo.", date)
 	return fmt.Errorf("Date is too new, not qualified for unembargo.")
 }
 
-func UnembargoCron() error {
+func UnembargoCron(date int) error {
 	project := os.Getenv("GCLOUD_PROJECT")
 	log.Printf("current project: %s", project)
 	privateBucketName := "embargo-" + project
 	publicBucketName := "archive-" + project
 
 	uc := NewUnembargoConfig(privateBucketName, publicBucketName)
-	return uc.Unembargo(FormatDateAsInt(time.Now().AddDate(-1, 0, 0)))
+	return uc.Unembargo(date)
 }

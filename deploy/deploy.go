@@ -6,6 +6,7 @@ import (
 	"net/http"
 	// Enable exported debug vars.  See https://golang.org/pkg/expvar/
 	_ "expvar"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,20 +78,37 @@ func updateEmbargoWhitelist(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	return
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
-// Unembargo the data one year ago.
+// Unembargo the data one year ago if the date is not specified.
+// If there is a date more than one year ago, then unembargo the data of that date.
 func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Unembargo the date one year ago.\n")
-
-	err := embargo.UnembargoCron()
+	log.Printf("Unembargo data.\n")
+	date := r.URL.Query().Get("date")
+	undate := embargo.FormatDateAsInt(time.Now().AddDate(-1, 0, 0))
+	var err error
+	if date != "" {
+		undate, err = strconv.Atoi(date)
+		if err != nil {
+			log.Print(err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+	log.Printf("Date of the unembargo data is %d.", undate)
+	err = embargo.UnembargoCron(undate)
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	return
+	log.Println("success")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {

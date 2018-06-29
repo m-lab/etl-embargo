@@ -95,7 +95,7 @@ func unEmbargoCron(w http.ResponseWriter, r *http.Request) {
 		undate, err = strconv.Atoi(date)
 		if err != nil {
 			log.Print(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 	}

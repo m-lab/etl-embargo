@@ -28,10 +28,10 @@ cache:
     - "$HOME/google-cloud-sdk/"
 
 script:
-- GCLOUD_PROJECT=mlab-testing go test -v -coverpkg=./... -coverprofile=embargo.cov github.com/m-lab/etl-embargo
-
+# NOTE(soltesz): disabled b/c we are retiring this service and the test seems flaky.
+#- GCLOUD_PROJECT=mlab-testing go test -v -coverpkg=./... -coverprofile=embargo.cov github.com/m-lab/etl-embargo
 # Coveralls
-- $HOME/gopath/bin/goveralls -coverprofile=embargo.cov -service=travis-ci
+#- $HOME/gopath/bin/goveralls -coverprofile=embargo.cov -service=travis-ci
 
 # Clean build and prepare for deployment
 - cd $TRAVIS_BUILD_DIR/deploy && go build

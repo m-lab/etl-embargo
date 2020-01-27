@@ -1,4 +1,6 @@
-This is the package for embargo process on cloud paltform.
+**M-Lab no longer needs to embargo things. This repository is now archived.**
+
+This is the package for embargo process on cloud platform.
 
 | branch | travis-ci | report-card | coveralls |
 |--------|-----------|-----------|-------------|
